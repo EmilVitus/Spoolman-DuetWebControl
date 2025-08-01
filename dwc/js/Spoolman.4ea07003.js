@@ -44,6 +44,7 @@
           // Language system
           selectedLanguage: savedLanguage,
           languageRevision: 0, // Force Vue reactivity for language changes
+          languageMessage: null, // Separate message for language changes
           translations: {
             da: {
               // Headers
@@ -907,37 +908,10 @@
             ]) : null
           ]),
           
-          // Debug Info
+          // Language Settings (moved above debug for better UX)
           h('div', {
             style: {
               marginTop: '30px',
-              padding: '15px',
-              background: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '8px',
-              fontSize: '12px',
-              color: '#495057'
-            }
-          }, [
-            h('h4', { style: { margin: '0 0 10px 0', color: '#495057' } }, self.t('debug_info')),
-            h('div', [
-              h('strong', { style: { color: '#495057' } }, self.t('plugin_status') + ' '), self.t('loaded_functional')
-            ]),
-            h('div', [
-              h('strong', { style: { color: '#495057' } }, self.t('vue_render') + ' '), self.t('render_working')
-            ]),
-            h('div', [
-              h('strong', { style: { color: '#495057' } }, self.t('navigation') + ' '), self.t('tab_registered')
-            ]),
-            h('div', [
-              h('strong', { style: { color: '#495057' } }, self.t('debugging') + ' '), self.t('check_console')
-            ])
-          ]),
-          
-          // Language Settings
-          h('div', {
-            style: {
-              marginTop: '20px',
               padding: '15px',
               background: '#e3f2fd',
               border: '1px solid #bbdefb',
@@ -947,6 +921,20 @@
             }
           }, [
             h('h4', { style: { margin: '0 0 15px 0', color: '#0d47a1' } }, self.t('language_settings')),
+            
+            // Language success message
+            this.languageMessage ? h('div', {
+              style: {
+                background: '#d4edda',
+                color: '#155724',
+                padding: '10px',
+                borderRadius: '4px',
+                marginBottom: '15px',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }
+            }, this.languageMessage) : null,
+            
             h('div', {
               style: {
                 display: 'flex',
@@ -1003,6 +991,33 @@
                   fontStyle: 'italic'
                 }
               }, 'Current: ' + (this.getCurrentLanguage() === 'da' ? 'Dansk 🇩🇰' : 'English 🇺🇸'))
+            ])
+          ]),
+          
+          // Debug Info (moved below language settings)
+          h('div', {
+            style: {
+              marginTop: '20px',
+              padding: '15px',
+              background: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#495057'
+            }
+          }, [
+            h('h4', { style: { margin: '0 0 10px 0', color: '#495057' } }, self.t('debug_info')),
+            h('div', [
+              h('strong', { style: { color: '#495057' } }, self.t('plugin_status') + ' '), self.t('loaded_functional')
+            ]),
+            h('div', [
+              h('strong', { style: { color: '#495057' } }, self.t('vue_render') + ' '), self.t('render_working')
+            ]),
+            h('div', [
+              h('strong', { style: { color: '#495057' } }, self.t('navigation') + ' '), self.t('tab_registered')
+            ]),
+            h('div', [
+              h('strong', { style: { color: '#495057' } }, self.t('debugging') + ' '), self.t('check_console')
             ])
           ])
         ]);
@@ -1080,19 +1095,19 @@
           
           var self = this;
           
-          // Show success message after a brief delay to ensure language is switched
+          // Show language change message after a brief delay to ensure language is switched
           setTimeout(function() {
             var currentLang = self.getCurrentLanguage();
             if (currentLang === 'da') {
-              self.successMessage = '✅ Sprog skiftet til Dansk!';
+              self.languageMessage = '✅ Sprog skiftet til Dansk!';
             } else {
-              self.successMessage = '✅ Language switched to English!';
+              self.languageMessage = '✅ Language switched to English!';
             }
             self.$forceUpdate();
             
-            // Clear success message after delay
+            // Clear language message after delay
             setTimeout(function() {
-              self.successMessage = null;
+              self.languageMessage = null;
               self.$forceUpdate();
             }, 4000);
           }, 100);
