@@ -1,0 +1,30 @@
+services:
+  spoolman:
+    image: ghcr.io/donkie/spoolman:latest
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: ./data
+        target: /home/app/.local/share/spoolman
+    ports:
+      - "7912:8000"  # Standard Spoolman port
+    environment:
+      - TZ=Europe/Stockholm
+    networks:
+      - spoolman-network
+
+  nginx-cors:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "7913:7913"  # CORS proxy port - BRUG DENNE I DWC PLUGIN
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - spoolman
+    networks:
+      - spoolman-network
+
+networks:
+  spoolman-network:
+    driver: bridge

@@ -1,0 +1,65 @@
+# === DuetWebControl Plugin .gitignore ===
+
+# Build artifacts
+*.zip
+*.tar.gz
+dist/
+build/
+
+# Development files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Plugin specific
+SpoolmanPlugin-V*.zip
+*.backup
+
+# Docker/Spoolman data
+SpoolmanCORS-Setup/data/
+SpoolmanCORS-Setup/*.backup
+
+# Local testing
+test-uploads/
+local-config.json
+debug.js
+
+# Compiled assets (if using build tools)
+*.min.js
+*.min.css
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Runtime cache
+.cache/
