@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   spoolman:
     image: ghcr.io/donkie/spoolman:latest
@@ -7,7 +9,7 @@ services:
         source: ./data
         target: /home/app/.local/share/spoolman
     ports:
-      - "7912:8000"  # Standard Spoolman port
+      - "7912:8000"  # Original Spoolman port (kan stadig bruges lokalt)
     environment:
       - TZ=Europe/Stockholm
     networks:
@@ -17,7 +19,7 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     ports:
-      - "7913:7913"  # CORS proxy port - BRUG DENNE I DWC PLUGIN
+      - "7913:7913"  # Ny port med CORS support
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
