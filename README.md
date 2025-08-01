@@ -119,9 +119,6 @@ Test alle funktioner uden Spoolman server:
 
 Plugin inkluderer automatisk version checking. Nye versioner kan downloades fra [Releases](https://github.com/EmilVitus/Spoolman-DuetWebControl/releases).
 
-## 🤝 **Bidrag**
-
-Bidrag er velkomne! Se venligst [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## 📄 **Licens**
 
