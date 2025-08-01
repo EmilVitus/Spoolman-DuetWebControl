@@ -2,10 +2,11 @@
   "id": "Spoolman",
   "name": "Spoolman Integration",
   "author": "Emil Vitus",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "license": "GPL-3.0",
+  "homepage": "https://github.com/EmilVitus/Spoolman-DuetWebControl",
   "dwcVersion": "3.6",
   "loadDwcResources": true,
   "sbcRequired": false,
-  "description": "Integration med Spoolman filament management system for E3D Toolchanger med 4 hotends. Inkluderer automatisk filament tracking og sync."
+  "description": "Integration med Spoolman filament management system for E3D Toolchanger med 4 hotends. Inkluderer automatisk filament tracking, cross-device sync og multi-sprog support."
 }

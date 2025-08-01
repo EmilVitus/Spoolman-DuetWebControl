@@ -1,6 +1,6 @@
 # 🧵 Spoolman DuetWebControl Integration
 
-Een komplet filament management integration mellem [Spoolman](https://github.com/Donkie/Spoolman) og [DuetWebControl](https://github.com/Duet3D/DuetWebControl) designet til E3D Toolchanger systemer med op til 4 hotends.
+En komplet filament management integration mellem [Spoolman](https://github.com/Donkie/Spoolman) og [DuetWebControl](https://github.com/Duet3D/DuetWebControl) designet til E3D Toolchanger systemer med op til 4 hotends.
 
 ![Version](https://img.shields.io/badge/version-0.3.5-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
@@ -136,7 +136,6 @@ Dette projekt er licenseret under GPL-3.0 License - se [LICENSE](./LICENSE) file
 
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/EmilVitus/Spoolman-DuetWebControl/issues)
 - 💡 **Feature Requests**: [GitHub Discussions](https://github.com/EmilVitus/Spoolman-DuetWebControl/discussions)
-- 📧 **Email**: [Din email her]
 
 ---
 

@@ -12,6 +12,7 @@
         var savedConnected = localStorage.getItem('spoolman_connected') === 'true';
         var savedApiConfig = localStorage.getItem('spoolman_show_api_config') === 'true';
         var savedIsDemo = localStorage.getItem('spoolman_is_demo') === 'true';
+        var savedLanguage = localStorage.getItem('spoolman_language') || 'auto';
         
         // Hvis ingen URL er gemt, prøv at auto-detecte eller vis setup
         if (!savedUrl) {
@@ -38,7 +39,160 @@
           trackingInterval: null,
           lastExtruderPositions: [0, 0, 0, 0],
           rrfUrl: 'http://toolchanger', // Default RRF URL
-          trackingStartTime: null
+          trackingStartTime: null,
+          
+          // Language system
+          selectedLanguage: savedLanguage,
+          translations: {
+            da: {
+              // Headers
+              'filament_tracking': '📊 Filament Tracking',
+              'toolchanger_config': '🔧 E3D Toolchanger Konfiguration',
+              'connection_status': '✅ Klar til brug',
+              'debug_info': '🔧 Debug Information',
+              'language_settings': '🌐 Sprog / Language',
+              
+              // Tracking
+              'tracking_active': '🟢 Tracking Aktiv',
+              'tracking_inactive': '🔴 Tracking Inaktiv',
+              'start_tracking': '▶️ Start Tracking',
+              'stop_tracking': '⏹️ Stop Tracking',
+              'manual_update': '✏️ Manuel Opdatering',
+              'sync_to_spoolman': '📡 Sync til Spoolman',
+              'tracking_started': '⏱️ Tracking startet',
+              'tracking_note': '💡 Tracking køre kun mens DWC er åben i browseren',
+              
+              // Connection
+              'demo_mode_active': '🎭 Demo Mode Aktiv',
+              'demo_mode_desc': 'Du bruger test data. Alle valg og ændringer er kun for demonstration.',
+              'ready_to_use': '✅ Klar til brug',
+              'sync_devices': '🔄 Sync enheder',
+              'syncing': '⏳ Syncer...',
+              'first_time_setup': '🔧 Første gangs opsætning',
+              'choose_source': '🔧 Vælg filament kilde',
+              'first_time_note': '💡 På denne enhed skal du forbinde til Spoolman én gang. Dine filament valg synkroniseres automatisk fra serveren.',
+              'start_demo': '🎭 Start med Demo Data',
+              'connect_spoolman': '🔌 Forbind til Spoolman Server',
+              'spoolman_config': '🔧 Spoolman Server Konfiguration',
+              'cors_note': '✅ Brug port 7913 for CORS support (se SpoolmanCORS-Setup.zip).',
+              'test_connection': 'Test Forbindelse',
+              'testing': 'Tester...',
+              'disconnect': '❌ Afbryd Forbindelse',
+              'switch_source': '🔄 Skift kilde',
+              
+              // Filament
+              'selected_filament': 'Valgt Filament:',
+              'choose_filament': 'Vælg filament...',
+              'weight': 'Vægt',
+              'consumed_session': 'Forbrugt denne session:',
+              'eject_filament': '⏏️ Eject Filament',
+              'no_filament_info': 'Ingen filament information',
+              'unknown_material': 'Ukendt materiale',
+              
+              // Messages
+              'connection_success': '✅ Forbindelse til Spoolman lykkedes',
+              'found_spools': 'Fandt',
+              'spools': 'spools',
+              'demo_activated': '🎭 Demo mode aktiveret! Du kan nu teste alle funktioner med demo data.',
+              'tracking_started_msg': '▶️ Filament tracking startet! Positions bliver tracked hver 10. sekund.',
+              'tracking_stopped_msg': '⏹️ Filament tracking stoppet. Manuel opdatering eller sync til Spoolman er stadig muligt.',
+              'manual_update_done': '✏️ Manuel opdatering gennemført!',
+              'sync_completed': '📡 Sync til Spoolman gennemført!',
+              'spools_updated': 'spools opdateret.',
+              'auto_found': '🎯 Auto-fundet Spoolman på:',
+              'searching_server': '🔍 Søger efter Spoolman server...',
+              
+              // Debug
+              'plugin_status': 'Plugin Status:',
+              'loaded_functional': 'Loaded and Functional ✅',
+              'vue_render': 'Vue Render:',
+              'render_working': 'Working with render() functions ✅',
+              'navigation': 'Navigation:',
+              'tab_registered': 'Tab registered successfully ✅',
+              'debugging': 'Debugging:',
+              'check_console': 'Check browser F12 Console for detailed logs 🔍',
+              
+              // Language
+              'language_auto': 'Automatisk (Browser sprog)',
+              'language_danish': 'Dansk',
+              'language_english': 'English',
+              'language_changed': '🌐 Sprog ændret! Sider genindlæses...'
+            },
+            en: {
+              // Headers
+              'filament_tracking': '📊 Filament Tracking',
+              'toolchanger_config': '🔧 E3D Toolchanger Configuration',
+              'connection_status': '✅ Ready to use',
+              'debug_info': '🔧 Debug Information',
+              'language_settings': '🌐 Language / Sprog',
+              
+              // Tracking
+              'tracking_active': '🟢 Tracking Active',
+              'tracking_inactive': '🔴 Tracking Inactive',
+              'start_tracking': '▶️ Start Tracking',
+              'stop_tracking': '⏹️ Stop Tracking',
+              'manual_update': '✏️ Manual Update',
+              'sync_to_spoolman': '📡 Sync to Spoolman',
+              'tracking_started': '⏱️ Tracking started',
+              'tracking_note': '💡 Tracking only runs while DWC is open in browser',
+              
+              // Connection
+              'demo_mode_active': '🎭 Demo Mode Active',
+              'demo_mode_desc': 'You are using test data. All selections and changes are for demonstration only.',
+              'ready_to_use': '✅ Ready to use',
+              'sync_devices': '🔄 Sync devices',
+              'syncing': '⏳ Syncing...',
+              'first_time_setup': '🔧 First time setup',
+              'choose_source': '🔧 Choose filament source',
+              'first_time_note': '💡 On this device you need to connect to Spoolman once. Your filament selections synchronize automatically from the server.',
+              'start_demo': '🎭 Start with Demo Data',
+              'connect_spoolman': '🔌 Connect to Spoolman Server',
+              'spoolman_config': '🔧 Spoolman Server Configuration',
+              'cors_note': '✅ Use port 7913 for CORS support (see SpoolmanCORS-Setup.zip).',
+              'test_connection': 'Test Connection',
+              'testing': 'Testing...',
+              'disconnect': '❌ Disconnect',
+              'switch_source': '🔄 Switch source',
+              
+              // Filament
+              'selected_filament': 'Selected Filament:',
+              'choose_filament': 'Choose filament...',
+              'weight': 'Weight',
+              'consumed_session': 'Consumed this session:',
+              'eject_filament': '⏏️ Eject Filament',
+              'no_filament_info': 'No filament information',
+              'unknown_material': 'Unknown material',
+              
+              // Messages
+              'connection_success': '✅ Connection to Spoolman successful',
+              'found_spools': 'Found',
+              'spools': 'spools',
+              'demo_activated': '🎭 Demo mode activated! You can now test all functions with demo data.',
+              'tracking_started_msg': '▶️ Filament tracking started! Positions are tracked every 10 seconds.',
+              'tracking_stopped_msg': '⏹️ Filament tracking stopped. Manual update or sync to Spoolman is still possible.',
+              'manual_update_done': '✏️ Manual update completed!',
+              'sync_completed': '📡 Sync to Spoolman completed!',
+              'spools_updated': 'spools updated.',
+              'auto_found': '🎯 Auto-discovered Spoolman at:',
+              'searching_server': '🔍 Searching for Spoolman server...',
+              
+              // Debug
+              'plugin_status': 'Plugin Status:',
+              'loaded_functional': 'Loaded and Functional ✅',
+              'vue_render': 'Vue Render:',
+              'render_working': 'Working with render() functions ✅',
+              'navigation': 'Navigation:',
+              'tab_registered': 'Tab registered successfully ✅',
+              'debugging': 'Debugging:',
+              'check_console': 'Check browser F12 Console for detailed logs 🔍',
+              
+              // Language
+              'language_auto': 'Auto (Browser language)',
+              'language_danish': 'Dansk',
+              'language_english': 'English',
+              'language_changed': '🌐 Language changed! Page reloading...'
+            }
+          }
         };
       },
       
@@ -62,7 +216,7 @@
               marginBottom: '20px'
             }
           }, [
-            h('h3', { style: { margin: '0 0 15px 0', color: '#343a40' } }, '📊 Filament Tracking'),
+            h('h3', { style: { margin: '0 0 15px 0', color: '#343a40' } }, this.t('filament_tracking')),
             
             h('div', {
               style: {
@@ -82,7 +236,7 @@
                   fontSize: '14px',
                   fontWeight: 'bold'
                 }
-              }, this.tracking ? '🟢 Tracking Aktiv' : '🔴 Tracking Inaktiv'),
+              }, this.tracking ? this.t('tracking_active') : this.t('tracking_inactive')),
               
               // Start/Stop tracking button
               h('button', {
@@ -104,7 +258,7 @@
                     }
                   }
                 }
-              }, this.tracking ? '⏹️ Stop Tracking' : '▶️ Start Tracking'),
+              }, this.tracking ? this.t('stop_tracking') : this.t('start_tracking')),
               
               // Manual update button
               h('button', {
@@ -121,7 +275,7 @@
                     self.showManualUpdate();
                   }
                 }
-              }, '✏️ Manuel Opdatering'),
+              }, this.t('manual_update')),
               
               // Update to Spoolman button
               h('button', {
@@ -138,7 +292,7 @@
                     self.updateSpoolmanUsage();
                   }
                 }
-              }, '📡 Sync til Spoolman')
+              }, this.t('sync_to_spoolman'))
             ]),
             
             // Tracking info
@@ -152,8 +306,8 @@
                 color: '#0c5460'
               }
             }, [
-              h('div', '⏱️ Tracking startet: ' + (this.trackingStartTime ? new Date(this.trackingStartTime).toLocaleTimeString('da-DK') : 'Ukendt')),
-              h('div', { style: { marginTop: '5px' } }, '💡 Tracking køre kun mens DWC er åben i browseren')
+              h('div', this.t('tracking_started') + ': ' + (this.trackingStartTime ? new Date(this.trackingStartTime).toLocaleTimeString('da-DK') : 'Ukendt')),
+              h('div', { style: { marginTop: '5px' } }, this.t('tracking_note'))
             ]) : null
           ]) : null,
           
@@ -170,15 +324,15 @@
               marginBottom: '20px'
             }
           }, [
-            h('div', { style: { fontWeight: 'bold', marginBottom: '5px' } }, '🎭 Demo Mode Aktiv'),
-            h('div', { style: { fontSize: '14px' } }, 'Du bruger test data. Alle valg og ændringer er kun for demonstration.')
+            h('div', { style: { fontWeight: 'bold', marginBottom: '5px' } }, this.t('demo_mode_active')),
+            h('div', { style: { fontSize: '14px' } }, this.t('demo_mode_desc'))
           ]) : null,
           
 
           
           // Toolheads Configuration
           this.connected ? h('div', [
-            h('h3', { style: { marginTop: '30px' } }, '🔧 E3D Toolchanger Konfiguration'),
+            h('h3', { style: { marginTop: '30px' } }, this.t('toolchanger_config')),
             h('div', {
               style: {
                 display: 'grid',
@@ -212,7 +366,7 @@
                       fontWeight: 'bold',
                       color: '#495057'
                     }
-                  }, 'Valgt Filament:'),
+                  }, this.t('selected_filament')),
                   h('select', {
                     style: {
                       width: '100%',
@@ -231,7 +385,7 @@
                         value: '',
                         selected: !self.selectedSpools[toolIndex]
                       } 
-                    }, 'Vælg filament...'),
+                    }, this.t('choose_filament')),
                     self.spools.map(function(spool) {
                       
                       // Build display name fra Spoolman data
@@ -387,12 +541,12 @@
                       ])
                     : h('span', {
                         style: { color: '#6c757d' }
-                      }, 'Ingen filament information'),
+                      }, self.t('no_filament_info')),
                   
                   // Vægt information
                   h('span', {
                     style: { color: '#495057' }
-                  }, 'Vægt: ' + 
+                  }, self.t('weight') + ': ' + 
                     (self.selectedSpools[toolIndex].remaining_weight !== null && self.selectedSpools[toolIndex].remaining_weight !== undefined 
                       ? Math.round(self.selectedSpools[toolIndex].remaining_weight) + 'g' 
                       : '?g') + 
@@ -411,7 +565,7 @@
                       fontWeight: 'bold',
                       color: '#495057'
                     }
-                  }, 'Forbrugt denne session:'),
+                  }, this.t('consumed_session')),
                   h('div', { 
                     style: { 
                       fontSize: '18px',
@@ -439,7 +593,7 @@
                       self.ejectSpool(toolIndex);
                     }
                   }
-                }, '⏏️ Eject Filament')
+                }, this.t('eject_filament'))
               ]);
             }))
           ]) : null,
@@ -465,7 +619,7 @@
                 marginBottom: '15px'
               }
             }, [
-              h('h3', { style: { margin: '0' } }, '✅ Klar til brug'),
+              h('h3', { style: { margin: '0' } }, this.t('ready_to_use')),
               h('button', {
                 style: {
                   padding: '6px 12px',
@@ -483,10 +637,10 @@
                     self.testConnection(true); // Sync fra andre enheder
                   }
                 }
-              }, this.loading ? '⏳ Syncer...' : '🔄 Sync enheder')
+              }, this.loading ? this.t('syncing') : this.t('sync_devices'))
             ]) : h('h3', { style: { margin: '0 0 15px 0' } }, 
-              this.isFirstTimeSetup ? '🔧 Første gangs opsætning' : 
-              '🔧 Vælg filament kilde'
+              this.isFirstTimeSetup ? this.t('first_time_setup') : 
+              this.t('choose_source')
             ),
             
             // First time setup besked
@@ -497,7 +651,7 @@
                 color: '#6c757d',
                 fontStyle: 'italic'
               }
-            }, '💡 På denne enhed skal du forbinde til Spoolman én gang. Dine filament valg synkroniseres automatisk fra serveren.') : null,
+            }, this.t('first_time_note')) : null,
             
             // Mode selection buttons
             !this.connected ? h('div', {
@@ -521,7 +675,7 @@
                 on: {
                   click: this.tryDemoMode
                 }
-              }, '🎭 Start med Demo Data'),
+              }, this.t('start_demo')),
               
               h('button', {
                 style: {
@@ -538,7 +692,7 @@
                     self.$forceUpdate();
                   }
                 }
-              }, '🔌 Forbind til Spoolman Server')
+              }, this.t('connect_spoolman'))
             ]) : null,
             
             // API Configuration (shown when requested)
@@ -550,7 +704,7 @@
                 marginTop: '10px'
               }
             }, [
-              h('h5', { style: { margin: '0 0 10px 0', color: '#495057' } }, '🔧 Spoolman Server Konfiguration'),
+              h('h5', { style: { margin: '0 0 10px 0', color: '#495057' } }, this.t('spoolman_config')),
               h('p', {
                 style: {
                   margin: '0 0 10px 0',
@@ -558,7 +712,7 @@
                   color: '#28a745',
                   fontWeight: 'bold'
                 }
-              }, '✅ Brug port 7913 for CORS support (se SpoolmanCORS-Setup.zip).'),
+              }, this.t('cors_note')),
               
               h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } }, [
                 h('input', {
@@ -593,7 +747,7 @@
                       self.testConnection(false); // Normal forbindelse fra UI knap
                     }
                   }
-                }, this.loading ? 'Tester...' : 'Test Forbindelse')
+                }, this.loading ? this.t('testing') : this.t('test_connection'))
               ]),
               
               h('div', { style: { marginTop: '10px' } }, [
@@ -609,7 +763,7 @@
                   on: {
                     click: this.disconnect
                   }
-                }, '❌ Afbryd Forbindelse')
+                }, this.t('disconnect'))
               ])
             ]) : null,
             
@@ -676,7 +830,7 @@
                     self.$forceUpdate();
                   }
                 }
-              }, '🔄 Skift kilde')
+              }, this.t('switch_source'))
             ]) : null
           ]),
           
@@ -692,24 +846,129 @@
               color: '#495057'
             }
           }, [
-            h('h4', { style: { margin: '0 0 10px 0', color: '#495057' } }, '🔧 Debug Information'),
+            h('h4', { style: { margin: '0 0 10px 0', color: '#495057' } }, this.t('debug_info')),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, 'Plugin Status: '), 'Loaded and Functional ✅'
+              h('strong', { style: { color: '#495057' } }, this.t('plugin_status') + ' '), this.t('loaded_functional')
             ]),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, 'Vue Render: '), 'Working with render() functions ✅'
+              h('strong', { style: { color: '#495057' } }, this.t('vue_render') + ' '), this.t('render_working')
             ]),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, 'Navigation: '), 'Tab registered successfully ✅'
+              h('strong', { style: { color: '#495057' } }, this.t('navigation') + ' '), this.t('tab_registered')
             ]),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, 'Debugging: '), 'Check browser F12 Console for detailed logs 🔍'
+              h('strong', { style: { color: '#495057' } }, this.t('debugging') + ' '), this.t('check_console')
+            ])
+          ]),
+          
+          // Language Settings
+          h('div', {
+            style: {
+              marginTop: '20px',
+              padding: '15px',
+              background: '#e3f2fd',
+              border: '1px solid #bbdefb',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#0d47a1'
+            }
+          }, [
+            h('h4', { style: { margin: '0 0 15px 0', color: '#0d47a1' } }, this.t('language_settings')),
+            h('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                flexWrap: 'wrap'
+              }
+            }, [
+              h('label', {
+                style: {
+                  fontWeight: 'bold',
+                  color: '#0d47a1'
+                }
+              }, 'Language / Sprog:'),
+              h('select', {
+                style: {
+                  padding: '6px 12px',
+                  border: '1px solid #90caf9',
+                  borderRadius: '4px',
+                  background: 'white',
+                  color: '#0d47a1',
+                  fontSize: '14px',
+                  minWidth: '200px'
+                },
+                on: {
+                  change: function(event) {
+                    self.changeLanguage(event.target.value);
+                  }
+                }
+              }, [
+                h('option', {
+                  attrs: {
+                    value: 'auto',
+                    selected: this.selectedLanguage === 'auto'
+                  }
+                }, this.t('language_auto')),
+                h('option', {
+                  attrs: {
+                    value: 'da',
+                    selected: this.selectedLanguage === 'da'
+                  }
+                }, this.t('language_danish')),
+                h('option', {
+                  attrs: {
+                    value: 'en',
+                    selected: this.selectedLanguage === 'en'
+                  }
+                }, this.t('language_english'))
+              ]),
+              h('div', {
+                style: {
+                  fontSize: '12px',
+                  color: '#1565c0',
+                  fontStyle: 'italic'
+                }
+              }, 'Current: ' + (this.getCurrentLanguage() === 'da' ? 'Dansk 🇩🇰' : 'English 🇺🇸'))
             ])
           ])
         ]);
       },
       
       methods: {
+        // Translation helper function
+        t: function(key) {
+          var currentLang = this.getCurrentLanguage();
+          return this.translations[currentLang] && this.translations[currentLang][key] 
+            ? this.translations[currentLang][key] 
+            : this.translations['da'][key] || key; // Fallback to Danish then key
+        },
+        
+        // Get current language based on settings
+        getCurrentLanguage: function() {
+          if (this.selectedLanguage === 'auto') {
+            // Auto-detect from browser
+            var browserLang = navigator.language || navigator.userLanguage;
+            return browserLang.startsWith('da') ? 'da' : 'en';
+          }
+          return this.selectedLanguage === 'da' ? 'da' : 'en';
+        },
+        
+        // Change language
+        changeLanguage: function(newLang) {
+          this.selectedLanguage = newLang;
+          localStorage.setItem('spoolman_language', newLang);
+          
+          // Show change message
+          var self = this;
+          this.successMessage = this.t('language_changed');
+          
+          // Reload page after short delay to apply changes
+          setTimeout(function() {
+            location.reload();
+          }, 1500);
+        },
+        
         // Konverter hex farve til emoji
         getColorEmoji: function(hexColor) {
           if (!hexColor) return '⚪'; // Default hvid cirkel
@@ -1083,6 +1342,7 @@
           localStorage.setItem('spoolman_show_api_config', this.showApiConfig.toString());
           localStorage.setItem('spoolman_is_demo', this.isDemo.toString());
           localStorage.setItem('spoolman_first_time', this.isFirstTimeSetup.toString());
+          localStorage.setItem('spoolman_language', this.selectedLanguage);
           
           // Sync til Spoolman hvis forbundet (ikke demo mode)
           if (this.connected && !this.isDemo) {
