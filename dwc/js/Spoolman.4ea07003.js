@@ -217,7 +217,7 @@
               marginBottom: '20px'
             }
           }, [
-            h('h3', { style: { margin: '0 0 15px 0', color: '#343a40' } }, this.t('filament_tracking')),
+            h('h3', { style: { margin: '0 0 15px 0', color: '#343a40' } }, self.t('filament_tracking')),
             
             h('div', {
               style: {
@@ -237,7 +237,7 @@
                   fontSize: '14px',
                   fontWeight: 'bold'
                 }
-              }, this.tracking ? this.t('tracking_active') : this.t('tracking_inactive')),
+              }, this.tracking ? self.t('tracking_active') : self.t('tracking_inactive')),
               
               // Start/Stop tracking button
               h('button', {
@@ -259,7 +259,7 @@
                     }
                   }
                 }
-              }, this.tracking ? this.t('stop_tracking') : this.t('start_tracking')),
+              }, this.tracking ? self.t('stop_tracking') : self.t('start_tracking')),
               
               // Manual update button
               h('button', {
@@ -276,7 +276,7 @@
                     self.showManualUpdate();
                   }
                 }
-              }, this.t('manual_update')),
+              }, self.t('manual_update')),
               
               // Update to Spoolman button
               h('button', {
@@ -293,7 +293,7 @@
                     self.updateSpoolmanUsage();
                   }
                 }
-              }, this.t('sync_to_spoolman'))
+              }, self.t('sync_to_spoolman'))
             ]),
             
             // Tracking info
@@ -307,8 +307,8 @@
                 color: '#0c5460'
               }
             }, [
-              h('div', this.t('tracking_started') + ': ' + (this.trackingStartTime ? new Date(this.trackingStartTime).toLocaleTimeString('da-DK') : 'Ukendt')),
-              h('div', { style: { marginTop: '5px' } }, this.t('tracking_note'))
+              h('div', self.t('tracking_started') + ': ' + (this.trackingStartTime ? new Date(this.trackingStartTime).toLocaleTimeString('da-DK') : 'Ukendt')),
+              h('div', { style: { marginTop: '5px' } }, self.t('tracking_note'))
             ]) : null
           ]) : null,
           
@@ -325,15 +325,15 @@
               marginBottom: '20px'
             }
           }, [
-            h('div', { style: { fontWeight: 'bold', marginBottom: '5px' } }, this.t('demo_mode_active')),
-            h('div', { style: { fontSize: '14px' } }, this.t('demo_mode_desc'))
+            h('div', { style: { fontWeight: 'bold', marginBottom: '5px' } }, self.t('demo_mode_active')),
+            h('div', { style: { fontSize: '14px' } }, self.t('demo_mode_desc'))
           ]) : null,
           
 
           
           // Toolheads Configuration
           this.connected ? h('div', [
-            h('h3', { style: { marginTop: '30px' } }, this.t('toolchanger_config')),
+            h('h3', { style: { marginTop: '30px' } }, self.t('toolchanger_config')),
             h('div', {
               style: {
                 display: 'grid',
@@ -367,7 +367,7 @@
                       fontWeight: 'bold',
                       color: '#495057'
                     }
-                  }, this.t('selected_filament')),
+                  }, self.t('selected_filament')),
                   h('select', {
                     style: {
                       width: '100%',
@@ -386,7 +386,7 @@
                         value: '',
                         selected: !self.selectedSpools[toolIndex]
                       } 
-                    }, this.t('choose_filament')),
+                    }, self.t('choose_filament')),
                     self.spools.map(function(spool) {
                       
                       // Build display name fra Spoolman data
@@ -566,7 +566,7 @@
                       fontWeight: 'bold',
                       color: '#495057'
                     }
-                  }, this.t('consumed_session')),
+                  }, self.t('consumed_session')),
                   h('div', { 
                     style: { 
                       fontSize: '18px',
@@ -594,7 +594,7 @@
                       self.ejectSpool(toolIndex);
                     }
                   }
-                }, this.t('eject_filament'))
+                }, self.t('eject_filament'))
               ]);
             }))
           ]) : null,
@@ -620,7 +620,7 @@
                 marginBottom: '15px'
               }
             }, [
-              h('h3', { style: { margin: '0' } }, this.t('ready_to_use')),
+              h('h3', { style: { margin: '0' } }, self.t('ready_to_use')),
               h('button', {
                 style: {
                   padding: '6px 12px',
@@ -638,10 +638,10 @@
                     self.testConnection(true); // Sync fra andre enheder
                   }
                 }
-              }, this.loading ? this.t('syncing') : this.t('sync_devices'))
+              }, this.loading ? self.t('syncing') : self.t('sync_devices'))
             ]) : h('h3', { style: { margin: '0 0 15px 0' } }, 
-              this.isFirstTimeSetup ? this.t('first_time_setup') : 
-              this.t('choose_source')
+              this.isFirstTimeSetup ? self.t('first_time_setup') : 
+              self.t('choose_source')
             ),
             
             // First time setup besked
@@ -652,7 +652,7 @@
                 color: '#6c757d',
                 fontStyle: 'italic'
               }
-            }, this.t('first_time_note')) : null,
+            }, self.t('first_time_note')) : null,
             
             // Mode selection buttons
             !this.connected ? h('div', {
@@ -676,7 +676,7 @@
                 on: {
                   click: this.tryDemoMode
                 }
-              }, this.t('start_demo')),
+              }, self.t('start_demo')),
               
               h('button', {
                 style: {
@@ -693,7 +693,7 @@
                     self.$forceUpdate();
                   }
                 }
-              }, this.t('connect_spoolman'))
+              }, self.t('connect_spoolman'))
             ]) : null,
             
             // API Configuration (shown when requested)
@@ -705,7 +705,7 @@
                 marginTop: '10px'
               }
             }, [
-              h('h5', { style: { margin: '0 0 10px 0', color: '#495057' } }, this.t('spoolman_config')),
+              h('h5', { style: { margin: '0 0 10px 0', color: '#495057' } }, self.t('spoolman_config')),
               h('p', {
                 style: {
                   margin: '0 0 10px 0',
@@ -713,7 +713,7 @@
                   color: '#28a745',
                   fontWeight: 'bold'
                 }
-              }, this.t('cors_note')),
+              }, self.t('cors_note')),
               
               h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } }, [
                 h('input', {
@@ -748,7 +748,7 @@
                       self.testConnection(false); // Normal forbindelse fra UI knap
                     }
                   }
-                }, this.loading ? this.t('testing') : this.t('test_connection'))
+                }, this.loading ? self.t('testing') : self.t('test_connection'))
               ]),
               
               h('div', { style: { marginTop: '10px' } }, [
@@ -764,7 +764,7 @@
                   on: {
                     click: this.disconnect
                   }
-                }, this.t('disconnect'))
+                }, self.t('disconnect'))
               ])
             ]) : null,
             
@@ -831,7 +831,7 @@
                     self.$forceUpdate();
                   }
                 }
-              }, this.t('switch_source'))
+              }, self.t('switch_source'))
             ]) : null
           ]),
           
@@ -847,18 +847,18 @@
               color: '#495057'
             }
           }, [
-            h('h4', { style: { margin: '0 0 10px 0', color: '#495057' } }, this.t('debug_info')),
+            h('h4', { style: { margin: '0 0 10px 0', color: '#495057' } }, self.t('debug_info')),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, this.t('plugin_status') + ' '), this.t('loaded_functional')
+              h('strong', { style: { color: '#495057' } }, self.t('plugin_status') + ' '), self.t('loaded_functional')
             ]),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, this.t('vue_render') + ' '), this.t('render_working')
+              h('strong', { style: { color: '#495057' } }, self.t('vue_render') + ' '), self.t('render_working')
             ]),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, this.t('navigation') + ' '), this.t('tab_registered')
+              h('strong', { style: { color: '#495057' } }, self.t('navigation') + ' '), self.t('tab_registered')
             ]),
             h('div', [
-              h('strong', { style: { color: '#495057' } }, this.t('debugging') + ' '), this.t('check_console')
+              h('strong', { style: { color: '#495057' } }, self.t('debugging') + ' '), self.t('check_console')
             ])
           ]),
           
@@ -874,7 +874,7 @@
               color: '#0d47a1'
             }
           }, [
-            h('h4', { style: { margin: '0 0 15px 0', color: '#0d47a1' } }, this.t('language_settings')),
+            h('h4', { style: { margin: '0 0 15px 0', color: '#0d47a1' } }, self.t('language_settings')),
             h('div', {
               style: {
                 display: 'flex',
@@ -912,17 +912,17 @@
                   attrs: {
                     value: 'auto'
                   }
-                }, this.t('language_auto')),
+                }, self.t('language_auto')),
                 h('option', {
                   attrs: {
                     value: 'da'
                   }
-                }, this.t('language_danish')),
+                }, self.t('language_danish')),
                 h('option', {
                   attrs: {
                     value: 'en'
                   }
-                }, this.t('language_english'))
+                }, self.t('language_english'))
               ]),
               h('div', {
                 style: {
