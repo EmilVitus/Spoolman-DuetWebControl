@@ -889,6 +889,9 @@
                 }
               }, 'Language / Sprog:'),
               h('select', {
+                attrs: {
+                  value: this.selectedLanguage
+                },
                 style: {
                   padding: '6px 12px',
                   border: '1px solid #90caf9',
@@ -906,20 +909,17 @@
               }, [
                 h('option', {
                   attrs: {
-                    value: 'auto',
-                    selected: this.selectedLanguage === 'auto'
+                    value: 'auto'
                   }
                 }, this.t('language_auto')),
                 h('option', {
                   attrs: {
-                    value: 'da',
-                    selected: this.selectedLanguage === 'da'
+                    value: 'da'
                   }
                 }, this.t('language_danish')),
                 h('option', {
                   attrs: {
-                    value: 'en',
-                    selected: this.selectedLanguage === 'en'
+                    value: 'en'
                   }
                 }, this.t('language_english'))
               ]),
@@ -938,35 +938,77 @@
       methods: {
         // Translation helper function
         t: function(key) {
-          var currentLang = this.getCurrentLanguage();
-          return this.translations[currentLang] && this.translations[currentLang][key] 
-            ? this.translations[currentLang][key] 
-            : this.translations['da'][key] || key; // Fallback to Danish then key
+          try {
+            if (!key) return '';
+            
+            var currentLang = this.getCurrentLanguage();
+            
+            // Først prøv nuværende sprog
+            if (this.translations && this.translations[currentLang] && this.translations[currentLang][key]) {
+              return this.translations[currentLang][key];
+            }
+            
+            // Fallback til dansk
+            if (this.translations && this.translations['da'] && this.translations['da'][key]) {
+              return this.translations['da'][key];
+            }
+            
+            // Fallback til engelsk
+            if (this.translations && this.translations['en'] && this.translations['en'][key]) {
+              return this.translations['en'][key];
+            }
+            
+            // Sidste fallback til key selv
+            return key;
+          } catch (error) {
+            console.warn('🌐 SPOOLMAN: Translation fejl for key:', key, error);
+            return key; // Return key som fallback
+          }
         },
         
         // Get current language based on settings
         getCurrentLanguage: function() {
-          if (this.selectedLanguage === 'auto') {
-            // Auto-detect from browser
-            var browserLang = navigator.language || navigator.userLanguage;
-            return browserLang.startsWith('da') ? 'da' : 'en';
+          try {
+            if (!this.selectedLanguage || this.selectedLanguage === 'auto') {
+              // Auto-detect from browser
+              var browserLang = navigator.language || navigator.userLanguage || 'en';
+              return browserLang.toLowerCase().startsWith('da') ? 'da' : 'en';
+            }
+            
+            // Explicit language selection - validate it's supported
+            if (this.selectedLanguage === 'da' || this.selectedLanguage === 'en') {
+              return this.selectedLanguage;
+            }
+            
+            // Fallback to Danish if invalid
+            return 'da';
+          } catch (error) {
+            console.warn('🌐 SPOOLMAN: Language detection fejl:', error);
+            return 'da'; // Fallback
           }
-          return this.selectedLanguage === 'da' ? 'da' : 'en';
         },
         
         // Change language
         changeLanguage: function(newLang) {
+          console.log('🌐 SPOOLMAN: Skifter sprog fra', this.selectedLanguage, 'til', newLang);
+          
           this.selectedLanguage = newLang;
           localStorage.setItem('spoolman_language', newLang);
           
-          // Show change message
-          var self = this;
+          // Show change message with new language
           this.successMessage = this.t('language_changed');
           
-          // Reload page after short delay to apply changes
+          // Force immediate UI update without page reload
+          this.$forceUpdate();
+          
+          // Clear success message after delay
+          var self = this;
           setTimeout(function() {
-            location.reload();
-          }, 1500);
+            self.successMessage = null;
+            self.$forceUpdate();
+          }, 3000);
+          
+          console.log('✅ SPOOLMAN: Sprog skiftet til', this.getCurrentLanguage());
         },
         
         // Konverter hex farve til emoji
