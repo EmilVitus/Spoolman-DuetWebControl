@@ -43,6 +43,7 @@
           
           // Language system
           selectedLanguage: savedLanguage,
+          languageRevision: 0, // Force Vue reactivity for language changes
           translations: {
             da: {
               // Headers
@@ -936,10 +937,13 @@
       },
       
       methods: {
-        // Translation helper function
+        // Translation helper function with Vue reactivity
         t: function(key) {
           try {
             if (!key) return '';
+            
+            // Access languageRevision to trigger Vue reactivity when language changes
+            var revision = this.languageRevision;
             
             var currentLang = this.getCurrentLanguage();
             
@@ -996,27 +1000,32 @@
           this.selectedLanguage = newLang;
           localStorage.setItem('spoolman_language', newLang);
           
-          // Show immediate success message in new language
-          var currentLang = this.getCurrentLanguage();
-          if (currentLang === 'da') {
-            this.successMessage = '✅ Sprog skiftet til Dansk!';
-          } else {
-            this.successMessage = '✅ Language switched to English!';
-          }
+          // Increment language revision to trigger Vue reactivity for all t() calls
+          this.languageRevision++;
           
-          // Force immediate re-render of entire component without page reload
-          // This preserves DWC plugin state while updating all text
+          // Force immediate re-render
           this.$forceUpdate();
           
           var self = this;
           
-          // Clear success message after delay
+          // Show success message after a brief delay to ensure language is switched
           setTimeout(function() {
-            self.successMessage = null;
+            var currentLang = self.getCurrentLanguage();
+            if (currentLang === 'da') {
+              self.successMessage = '✅ Sprog skiftet til Dansk!';
+            } else {
+              self.successMessage = '✅ Language switched to English!';
+            }
             self.$forceUpdate();
-          }, 4000);
+            
+            // Clear success message after delay
+            setTimeout(function() {
+              self.successMessage = null;
+              self.$forceUpdate();
+            }, 4000);
+          }, 100);
           
-          console.log('✅ SPOOLMAN: Sprog skiftet til', this.getCurrentLanguage(), 'uden page reload');
+          console.log('✅ SPOOLMAN: Sprog skiftet til', this.getCurrentLanguage(), 'revision:', this.languageRevision);
         },
         
         // Konverter hex farve til emoji
