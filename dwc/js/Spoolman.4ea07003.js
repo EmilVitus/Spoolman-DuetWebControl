@@ -116,7 +116,7 @@
               'language_auto': 'Automatisk (Browser sprog)',
               'language_danish': 'Dansk',
               'language_english': 'English',
-              'language_changed': '🌐 Sprog ændret til Dansk! Siden genindlæses...'
+              'language_changed': '🌐 Sprog ændret til Dansk!'
             },
             en: {
               // Headers
@@ -190,7 +190,7 @@
               'language_auto': 'Auto (Browser language)',
               'language_danish': 'Dansk',
               'language_english': 'English',
-              'language_changed': '🌐 Language changed to English! Page reloading...'
+              'language_changed': '🌐 Language changed to English!'
             }
           }
         };
@@ -996,25 +996,27 @@
           this.selectedLanguage = newLang;
           localStorage.setItem('spoolman_language', newLang);
           
-          // Show change message
-          this.successMessage = this.t('language_changed');
+          // Show immediate success message in new language
+          var currentLang = this.getCurrentLanguage();
+          if (currentLang === 'da') {
+            this.successMessage = '✅ Sprog skiftet til Dansk!';
+          } else {
+            this.successMessage = '✅ Language switched to English!';
+          }
+          
+          // Force immediate re-render of entire component without page reload
+          // This preserves DWC plugin state while updating all text
+          this.$forceUpdate();
           
           var self = this;
           
-          // Reload page after short delay for proper language switch
-          // This ensures DWC plugin system handles the language change correctly
+          // Clear success message after delay
           setTimeout(function() {
-            console.log('🔄 SPOOLMAN: Gendindlæser side for sprog-skift...');
-            
-            // Save a temporary flag to indicate we're in a language change
-            localStorage.setItem('spoolman_language_changing', 'true');
-            
-            // Use window.location.href instead of location.reload() 
-            // This is more compatible with DWC's plugin loading system
-            window.location.href = window.location.href;
-          }, 1500);
+            self.successMessage = null;
+            self.$forceUpdate();
+          }, 4000);
           
-          console.log('✅ SPOOLMAN: Sprog skift planlagt til', this.getCurrentLanguage());
+          console.log('✅ SPOOLMAN: Sprog skiftet til', this.getCurrentLanguage(), 'uden page reload');
         },
         
         // Konverter hex farve til emoji
@@ -1907,29 +1909,11 @@
       
       mounted: function() {
         console.log('✅ SPOOLMAN: Full plugin mounted successfully!');
-        
-        // Check if we're loading after a language change
-        var isLanguageChanging = localStorage.getItem('spoolman_language_changing');
-        if (isLanguageChanging === 'true') {
-          console.log('🌐 SPOOLMAN: Plugin genindlæst efter sprog-skift til:', this.getCurrentLanguage());
-          localStorage.removeItem('spoolman_language_changing');
-          
-          // Show success message for language change
-          var currentLang = this.getCurrentLanguage();
-          if (currentLang === 'da') {
-            this.successMessage = '✅ Sprog skiftet til Dansk!';
-          } else {
-            this.successMessage = '✅ Language switched to English!';
-          }
-          var self = this;
-          setTimeout(function() {
-            self.successMessage = null;
-            self.$forceUpdate();
-          }, 3000);
-        }
-        
         console.log('🔧 SPOOLMAN: Klar til at vælge filament kilde - demo data eller Spoolman server');
         console.log('🌐 SPOOLMAN: Aktive sprog:', this.getCurrentLanguage());
+        
+        // Clean up any old language change flags (from previous versions)
+        localStorage.removeItem('spoolman_language_changing');
         
         // Auto-forbind til sidste kendte konfiguration
         var self = this;
