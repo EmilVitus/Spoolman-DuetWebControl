@@ -2,7 +2,7 @@
   "id": "Spoolman",
   "name": "Spoolman Integration",
   "author": "Emil Vitus",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "license": "GPL-3.0",
   "homepage": "https://github.com/EmilVitus/Spoolman-DuetWebControl",
   "dwcVersion": "3.6",

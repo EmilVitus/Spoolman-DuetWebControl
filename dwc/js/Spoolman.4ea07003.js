@@ -600,7 +600,7 @@
                                 marginLeft: '8px'
                               }
                             }, (function() {
-                              var colorName = self.getColorName(self.selectedSpools[toolIndex].filament.color_hex);
+                              var colorName = self.getColorName(self.selectedSpools[toolIndex].filament.color_hex, self.t.bind(self));
                               var hexCode = self.selectedSpools[toolIndex].filament.color_hex.toUpperCase();
                               if (!hexCode.startsWith('#')) hexCode = '#' + hexCode;
                               
@@ -1176,10 +1176,13 @@
         },
         
         // Konverter hex farve til menneskeligt læsbart navn
-        getColorName: function(hexColor) {
+        getColorName: function(hexColor, translateFn) {
           if (!hexColor) return null;
           
           var hex = hexColor.replace('#', '').toLowerCase();
+          
+          // Use translateFn if provided (from render), otherwise use this.t (from methods)
+          var t = translateFn || this.t.bind(this);
           
           // Common farve mapping med oversættelse
           var colorMap = {
@@ -1215,7 +1218,7 @@
           
           // Eksakt match med oversættelse
           if (colorMap[hex]) {
-            return this.t(colorMap[hex]);
+            return t(colorMap[hex]);
           }
           
           // Fuzzy match baseret på RGB afstand
@@ -1241,7 +1244,7 @@
             }
           }
           
-          return bestMatch || hexColor.toUpperCase();
+          return bestMatch ? t(bestMatch) : hexColor.toUpperCase();
         },
         
         hexToRgb: function(hex) {
