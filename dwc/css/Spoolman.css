@@ -1,0 +1,20 @@
+/* Spoolman Integration Plugin Styles */
+
+.spoolman-plugin {
+    padding: 1rem;
+}
+
+.spoolman-plugin .card {
+    margin-bottom: 1rem;
+}
+
+.spoolman-plugin .connection-status .badge {
+    font-size: 0.9rem;
+}
+
+.spoolman-plugin .filament-info {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
