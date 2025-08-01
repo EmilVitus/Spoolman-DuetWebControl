@@ -8,10 +8,117 @@ og dette projekt følger [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Planned
-- Multi-language support (English)
 - Advanced tracking settings
 - Print job integration
 - Material cost calculations
+
+## [0.4.9] - 2025-01-11
+
+### Fixed
+- 🛠️ **Dropdown reset bug** - Sprog dropdown hopper ikke længere tilbage til "auto" når besked forsvinder
+- 🎨 **Layout interference** - Sprog besked flyttet under dropdown for at undgå layout påvirkninger
+- ⚡ **Vue reactivity** - Forbedret stabilitet i dropdown value binding
+
+### Changed
+- 📱 Sprog success besked vises nu under dropdown i stedet for over
+
+## [0.4.8] - 2025-01-11
+
+### Added
+- 🎨 **Forbedret UX design** - Sprog indstillinger flyttet over debug info for bedre prioritering
+- 💬 **Separate besked system** - `languageMessage` adskilt fra `successMessage` for bedre organisation
+
+### Changed
+- 🌐 Sprog sektion placeret før debug sektion for bedre brugeroplevelse
+- 📊 Visual hierarchy forbedret med sprog først, debug sidst
+
+## [0.4.7] - 2025-01-11
+
+### Fixed
+- 🌈 **Farve navn oversættelse** - Farve navne viser nu korrekt "Rød" i stedet for "color_rød"
+- 🔧 **Translation context** - Løst 'this' binding problem i `getColorName` funktion
+- 🎨 **Color display** - Forbedret farve navn visning med korrekt sprog support
+
+### Technical
+- 📝 Tilføjet `translateFn` parameter til `getColorName` for korrekt context
+
+## [0.4.6] - 2025-01-11
+
+### Added
+- 🌐 **Komplette oversættelser** - Alle status beskeder nu oversat (dansk/engelsk)
+- 🌈 **Farve navn oversættelser** - Alle standard farver (rød, blå, grøn, osv.) oversat
+- 📊 **Status meddelelser** - "Using spools from demo/server" beskeder oversat
+
+### Fixed
+- 📝 Manglende translation keys tilføjet for fuld sprog support
+
+## [0.4.5] - 2025-01-11
+
+### Fixed
+- 🔧 **Critical JavaScript fejl** - Løst "TypeError: can't access property 't', this is undefined"
+- 🎯 **Vue render context** - Ændret `this.t()` til `self.t()` i render callbacks
+- ⚡ **Plugin stabilitet** - Plugin fungerer nu stabilt uden JavaScript fejl
+
+### Technical
+- 🛠️ Korrekt `this` context håndtering i Vue render funktion
+
+## [0.4.4] - 2025-01-11
+
+### Added
+- 🔄 **Vue reactivity system** - `languageRevision` counter for at force re-evaluation af oversættelser
+- ⚡ **Øjeblikkelig sprog skift** - Sprog ændres nu uden side reload
+
+### Fixed
+- 🌐 **Sprog switching** - Sproget skifter nu korrekt uden at lave tom plugin tab
+- 🔄 **Translation updates** - Alle tekster opdateres øjeblikkeligt ved sprog skift
+
+### Technical
+- 📊 `languageRevision` trigger system implementeret
+
+## [0.4.3] - 2025-01-11
+
+### Attempted Fix
+- 🔄 Fjernet alle page reload attempts for sprog switching
+- ⚡ Prøvede kun `$forceUpdate()` for UI opdateringer
+
+### Issues
+- ❌ Oversættelser opdaterede ikke korrekt uden reload
+
+## [0.4.2] - 2025-01-11
+
+### Attempted Fix  
+- 🔄 Controlled page reload med `window.location.href`
+- 💾 `spoolman_language_changing` flag for reload state tracking
+
+### Issues
+- ❌ Plugin tab blev stadig tom efter reload
+
+## [0.4.1] - 2025-01-11
+
+### Attempted Fix
+- 🔄 Fjernet `location.reload()` fra sprog switching
+- ⚡ Prøvede direkte `$forceUpdate()` i stedet
+
+### Issues  
+- ❌ Ingen automatisk reload, sprog skiftede ikke synligt
+
+## [0.4.0] - 2025-01-11
+
+### Added
+- 🌐 **Multi-language support** - Dansk og Engelsk sprog support
+- 🎛️ **Sprog dropdown** - Automatisk, Dansk og English valgmuligheder  
+- 🔄 **Dynamic language switching** - Skift sprog uden at genstarte plugin
+- 📝 **Komplet oversættelse system** - Alle UI elementer oversat
+- 🇩🇰 **Dansk som standard** - Browser locale detection med dansk fallback
+
+### Technical Features
+- 🛠️ Vue.js reactivity system til sprog opdateringer
+- 💾 localStorage persistence af sprog valg
+- 🌍 `getCurrentLanguage()` helper funktion
+- 📊 `t(key)` translation helper med fallback logic
+
+### Changed
+- 🎨 UI opdateret til v0.4.0 med homepage link til GitHub repository
 
 ## [0.3.5] - 2025-08-01
 
