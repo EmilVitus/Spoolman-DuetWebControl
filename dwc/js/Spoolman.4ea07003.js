@@ -922,25 +922,13 @@
           }, [
             h('h4', { style: { margin: '0 0 15px 0', color: '#0d47a1' } }, self.t('language_settings')),
             
-            // Language success message
-            this.languageMessage ? h('div', {
-              style: {
-                background: '#d4edda',
-                color: '#155724',
-                padding: '10px',
-                borderRadius: '4px',
-                marginBottom: '15px',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }
-            }, this.languageMessage) : null,
-            
             h('div', {
               style: {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                flexWrap: 'wrap'
+                flexWrap: 'wrap',
+                marginBottom: '15px'
               }
             }, [
               h('label', {
@@ -991,7 +979,20 @@
                   fontStyle: 'italic'
                 }
               }, 'Current: ' + (this.getCurrentLanguage() === 'da' ? 'Dansk 🇩🇰' : 'English 🇺🇸'))
-            ])
+            ]),
+            
+            // Language success message (moved below dropdown to prevent layout interference)
+            this.languageMessage ? h('div', {
+              style: {
+                background: '#d4edda',
+                color: '#155724',
+                padding: '10px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                marginTop: '10px'
+              }
+            }, this.languageMessage) : null
           ]),
           
           // Debug Info (moved below language settings)
