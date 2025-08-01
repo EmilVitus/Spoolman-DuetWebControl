@@ -117,7 +117,43 @@
               'language_auto': 'Automatisk (Browser sprog)',
               'language_danish': 'Dansk',
               'language_english': 'English',
-              'language_changed': '🌐 Sprog ændret til Dansk!'
+              'language_changed': '🌐 Sprog ændret til Dansk!',
+              
+              // Status messages
+              'using_spools_from': 'Bruger',
+              'spools_from_demo': 'spools fra demo data',
+              'spools_from_server': 'spools fra Spoolman server',
+              'connected_no_spools': 'Forbundet - ingen spools fundet',
+              
+              // Colors
+              'color_sort': 'Sort',
+              'color_hvid': 'Hvid',
+              'color_rød': 'Rød',
+              'color_grøn': 'Grøn',
+              'color_blå': 'Blå',
+              'color_gul': 'Gul',
+              'color_magenta': 'Magenta',
+              'color_cyan': 'Cyan',
+              'color_mørkerød': 'Mørkerød',
+              'color_mørkegrøn': 'Mørkegrøn',
+              'color_marineblå': 'Marineblå',
+              'color_lilla': 'Lilla',
+              'color_oliven': 'Oliven',
+              'color_teal': 'Teal',
+              'color_sølv': 'Sølv',
+              'color_grå': 'Grå',
+              'color_orange': 'Orange',
+              'color_pink': 'Pink',
+              'color_lyseblå': 'Lyseblå',
+              'color_lysegrøn': 'Lysegrøn',
+              'color_lysegul': 'Lysegul',
+              'color_guld': 'Guld',
+              'color_brun': 'Brun',
+              'color_plum': 'Plum',
+              'color_lysehavsgrøn': 'Lysehavsgrøn',
+              'color_himmelblå': 'Himmelblå',
+              'color_khaki': 'Khaki',
+              'color_lavendel': 'Lavendel'
             },
             en: {
               // Headers
@@ -191,7 +227,43 @@
               'language_auto': 'Auto (Browser language)',
               'language_danish': 'Dansk',
               'language_english': 'English',
-              'language_changed': '🌐 Language changed to English!'
+              'language_changed': '🌐 Language changed to English!',
+              
+              // Status messages
+              'using_spools_from': 'Using',
+              'spools_from_demo': 'spools from demo data',
+              'spools_from_server': 'spools from Spoolman server',
+              'connected_no_spools': 'Connected - no spools found',
+              
+              // Colors
+              'color_sort': 'Black',
+              'color_hvid': 'White',
+              'color_rød': 'Red',
+              'color_grøn': 'Green',
+              'color_blå': 'Blue',
+              'color_gul': 'Yellow',
+              'color_magenta': 'Magenta',
+              'color_cyan': 'Cyan',
+              'color_mørkerød': 'Dark Red',
+              'color_mørkegrøn': 'Dark Green',
+              'color_marineblå': 'Navy Blue',
+              'color_lilla': 'Purple',
+              'color_oliven': 'Olive',
+              'color_teal': 'Teal',
+              'color_sølv': 'Silver',
+              'color_grå': 'Gray',
+              'color_orange': 'Orange',
+              'color_pink': 'Pink',
+              'color_lyseblå': 'Light Blue',
+              'color_lysegrøn': 'Light Green',
+              'color_lysegul': 'Light Yellow',
+              'color_guld': 'Gold',
+              'color_brun': 'Brown',
+              'color_plum': 'Plum',
+              'color_lysehavsgrøn': 'Light Sea Green',
+              'color_himmelblå': 'Sky Blue',
+              'color_khaki': 'Khaki',
+              'color_lavendel': 'Lavender'
             }
           }
         };
@@ -806,8 +878,8 @@
                   marginBottom: '10px' 
                 }
               }, this.spools.length > 0
-                ? `Bruger ${this.spools.length} spools fra ${this.isDemo ? 'demo data' : 'Spoolman server'}`
-                : 'Forbundet - ingen spools fundet'
+                ? `${self.t('using_spools_from')} ${this.spools.length} ${this.isDemo ? self.t('spools_from_demo') : self.t('spools_from_server')}`
+                : self.t('connected_no_spools')
               ),
               h('button', {
                 style: {
@@ -1109,41 +1181,41 @@
           
           var hex = hexColor.replace('#', '').toLowerCase();
           
-          // Common farve mapping
+          // Common farve mapping med oversættelse
           var colorMap = {
-            '000000': 'Sort',
-            'ffffff': 'Hvid',
-            'ff0000': 'Rød',
-            '00ff00': 'Grøn', 
-            '0000ff': 'Blå',
-            'ffff00': 'Gul',
-            'ff00ff': 'Magenta',
-            '00ffff': 'Cyan',
-            '800000': 'Mørkerød',
-            '008000': 'Mørkegrøn',
-            '000080': 'Marineblå',
-            '800080': 'Lilla',
-            '808000': 'Oliven',
-            '008080': 'Teal',
-            'c0c0c0': 'Sølv',
-            '808080': 'Grå',
-            'ffa500': 'Orange',
-            'ffc0cb': 'Pink',
-            'add8e6': 'Lyseblå',
-            '90ee90': 'Lysegrøn',
-            'ffffe0': 'Lysegul',
-            'ffd700': 'Guld',
-            'a52a2a': 'Brun',
-            'dda0dd': 'Plum',
-            '20b2aa': 'Lysehavsgrøn',
-            '87ceeb': 'Himmelblå',
-            'f0e68c': 'Khaki',
-            'e6e6fa': 'Lavendel'
+            '000000': 'color_sort',
+            'ffffff': 'color_hvid',
+            'ff0000': 'color_rød',
+            '00ff00': 'color_grøn', 
+            '0000ff': 'color_blå',
+            'ffff00': 'color_gul',
+            'ff00ff': 'color_magenta',
+            '00ffff': 'color_cyan',
+            '800000': 'color_mørkerød',
+            '008000': 'color_mørkegrøn',
+            '000080': 'color_marineblå',
+            '800080': 'color_lilla',
+            '808000': 'color_oliven',
+            '008080': 'color_teal',
+            'c0c0c0': 'color_sølv',
+            '808080': 'color_grå',
+            'ffa500': 'color_orange',
+            'ffc0cb': 'color_pink',
+            'add8e6': 'color_lyseblå',
+            '90ee90': 'color_lysegrøn',
+            'ffffe0': 'color_lysegul',
+            'ffd700': 'color_guld',
+            'a52a2a': 'color_brun',
+            'dda0dd': 'color_plum',
+            '20b2aa': 'color_lysehavsgrøn',
+            '87ceeb': 'color_himmelblå',
+            'f0e68c': 'color_khaki',
+            'e6e6fa': 'color_lavendel'
           };
           
-          // Eksakt match
+          // Eksakt match med oversættelse
           if (colorMap[hex]) {
-            return colorMap[hex];
+            return this.t(colorMap[hex]);
           }
           
           // Fuzzy match baseret på RGB afstand
