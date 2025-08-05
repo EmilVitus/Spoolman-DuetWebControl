@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Nginx Reverse Proxy with CORS headers (points to existing Spoolman on 7912)
+  nginx-cors:
+    image: nginx:alpine
+    container_name: spoolman-cors-proxy
+    restart: unless-stopped
+    ports:
+      - "7913:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Spoolman Filament Tracker Service
+  spoolman-tracker:
+    build: ./spoolman-tracker
+    container_name: spoolman-filament-tracker
+    restart: unless-stopped
+    volumes:
+      - tracker_data:/data
+    environment:
+      # RepRapFirmware Configuration
+      - RRF_URL=http://192.168.86.50   # Change to your printer's IP
+      
+      # Spoolman Configuration (points to existing Spoolman on host)
+      - SPOOLMAN_URL=http://host.docker.internal:7912
+      
+      # Tracking Configuration
+      - POLL_INTERVAL=30              # Seconds between RRF polls
+      - AUTO_SYNC=true                # Automatically sync to Spoolman
+      - STATE_FILE=/data/tracker_state.json
+      
+      # Logging
+      - PYTHONUNBUFFERED=1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, os; print('OK' if os.path.exists('/data/tracker_state.json') else exit(1))"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  tracker_data:
+    driver: local

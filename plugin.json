@@ -8,5 +8,5 @@
   "dwcVersion": "3.6",
   "loadDwcResources": true,
   "sbcRequired": false,
-  "description": "Integration med Spoolman filament management system for E3D Toolchanger med 4 hotends. Inkluderer server-side automatisk filament tracking, cross-device sync og multi-sprog support. Kræver SpoolmanCORS-Setup-V3.1 for tracking."
+  "description": "Integration med Spoolman filament management system for E3D Toolchanger med 4 hotends. Inkluderer server-side automatisk filament tracking, cross-device sync og multi-sprog support. Brug SpoolmanCORS-Setup-V3.2-TrackingOnly som add-on til eksisterende Spoolman."
 }
