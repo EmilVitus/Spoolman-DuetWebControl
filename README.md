@@ -2,14 +2,15 @@
 
 En komplet filament management integration mellem [Spoolman](https://github.com/Donkie/Spoolman) og [DuetWebControl](https://github.com/Duet3D/DuetWebControl) designet til E3D Toolchanger systemer med op til 4 hotends.
 
-![Version](https://img.shields.io/badge/version-0.4.9-blue)
+![Version](https://img.shields.io/badge/version-0.5.0-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 ![DWC](https://img.shields.io/badge/DWC-3.6+-orange)
 
 ## ✨ **Features**
 
 - 🔧 **E3D Toolchanger Support**: Fuld support til 4 hotends (T0-T3)
-- 📊 **Automatisk Filament Tracking**: Real-time tracking af filament forbrug
+- 🚀 **Server-Side Filament Tracking**: 24/7 automatisk tracking uden browser afhængighed
+- 📊 **Real-time Status Monitoring**: Live tracking status og filament forbrug i DWC
 - 🌐 **Cross-Device Sync**: Sync filament valg på tværs af enheder via Spoolman
 - 🎨 **Farve Visualisering**: Farve cirkler og emojis for nem identifikation  
 - 🔄 **Auto-Connect**: Automatisk genopkobling og server discovery

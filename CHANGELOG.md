@@ -12,6 +12,39 @@ og dette projekt følger [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Print job integration
 - Material cost calculations
 
+## [0.5.0] - 2025-01-11
+
+### 🚀 **MAJOR: Server-Side Filament Tracking**
+- 🐍 **Python Tracking Service** - Komplet server-side automatisk filament tracking
+- 🐳 **Docker Integration** - SpoolmanCORS-Setup-V3 med Spoolman + CORS + Tracking service
+- ⚡ **24/7 Automatisk Tracking** - Ingen browser afhængighed, kører kontinuerligt
+- 📊 **Real-time RRF Integration** - Poller RepRapFirmware extruder positioner hver 30 sekunder
+- 🔄 **Auto-sync til Spoolman** - Automatisk opdatering af filament forbrug i Spoolman database
+
+### Added
+- 📱 **Server Status Monitoring** - DWC plugin viser server tracking status og sidste opdatering
+- 💾 **Persistent Tracking State** - Tracking data gemmes og overlever genstart
+- 🔧 **Environment Configuration** - RRF_URL, POLL_INTERVAL, AUTO_SYNC konfiguration
+- 🩺 **Health Checks** - Docker health monitoring af tracking service
+- 📋 **Comprehensive Documentation** - README, setup guide og troubleshooting for V3
+
+### Changed
+- ❌ **Removed Client-Side Tracking** - Fjernet browser-baseret tracking (start/stop knapper)
+- 🔄 **UI Redesign** - Server tracking status erstatter gamle tracking controls
+- 📊 **Real-time Status Display** - Sidst opdateret tidsstempel og service tilstand
+- 🎨 **Color-Coded Status** - Grøn = aktiv, rød = fejl, gul = inaktiv
+
+### Technical
+- 🐍 `spoolman_tracker.py` - Async Python service med aiohttp
+- 🐳 Docker Compose setup med 3 services (Spoolman + CORS + Tracker)
+- 📡 RRF API integration via `/rr_model?key=move`
+- 💾 JSON state persistence i Docker volume
+- 🔄 30-sekunder polling interval med konfigurerbar timeout
+
+### Breaking Changes
+- 🚨 **Kræver SpoolmanCORS-Setup-V3** - Tracking funktionalitet kræver ny Docker setup
+- 🚨 **Client tracking fjernet** - Gamle tracking knapper er erstattet med server status
+
 ## [0.4.9] - 2025-01-11
 
 ### Fixed

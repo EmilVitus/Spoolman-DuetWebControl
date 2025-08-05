@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Spoolman - Filament Spool Management System
+  spoolman:
+    image: ghcr.io/donkie/spoolman:latest
+    container_name: spoolman
+    restart: unless-stopped
+    ports:
+      - "7912:8000"
+    volumes:
+      - spoolman_data:/home/app/.local/share/spoolman
+    environment:
+      - SPOOLMAN_DB_TYPE=sqlite
+      - SPOOLMAN_DB_HOST=spoolman_data/spoolman.db
+      - SPOOLMAN_AUTOMATIC_BACKUPS=TRUE
+      - SPOOLMAN_BACKUP_PATH=/home/app/.local/share/spoolman/backups
+    networks:
+      - spoolman-network
+
+  # Nginx Reverse Proxy with CORS headers
+  nginx-cors:
+    image: nginx:alpine
+    container_name: spoolman-cors-proxy
+    restart: unless-stopped
+    ports:
+      - "7913:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - spoolman
+    networks:
+      - spoolman-network
+
+  # Spoolman Filament Tracker Service
+  spoolman-tracker:
+    build: ./spoolman-tracker
+    container_name: spoolman-filament-tracker
+    restart: unless-stopped
+    volumes:
+      - tracker_data:/data
+    environment:
+      # RepRapFirmware Configuration
+      - RRF_URL=http://192.168.1.100   # Change to your printer's IP
+      
+      # Spoolman Configuration  
+      - SPOOLMAN_URL=http://spoolman:8000
+      
+      # Tracking Configuration
+      - POLL_INTERVAL=30              # Seconds between RRF polls
+      - AUTO_SYNC=true                # Automatically sync to Spoolman
+      - STATE_FILE=/data/tracker_state.json
+      
+      # Logging
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - spoolman
+    networks:
+      - spoolman-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, os; print('OK' if os.path.exists('/data/tracker_state.json') else exit(1))"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  spoolman_data:
+    driver: local
+  tracker_data:
+    driver: local
+
+networks:
+  spoolman-network:
+    driver: bridge
