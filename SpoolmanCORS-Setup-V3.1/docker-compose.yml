@@ -4,10 +4,10 @@ services:
   # Spoolman - Filament Spool Management System
   spoolman:
     image: ghcr.io/donkie/spoolman:latest
-    container_name: spoolman
+    container_name: spoolman-v3
     restart: unless-stopped
     ports:
-      - "7912:8000"
+      - "7914:8000"
     volumes:
       - spoolman_data:/home/app/.local/share/spoolman
     environment:
@@ -41,7 +41,7 @@ services:
       - tracker_data:/data
     environment:
       # RepRapFirmware Configuration
-      - RRF_URL=http://192.168.1.100   # Change to your printer's IP
+      - RRF_URL=http://192.168.86.50   # Change to your printer's IP
       
       # Spoolman Configuration  
       - SPOOLMAN_URL=http://spoolman:8000

@@ -1,4 +1,4 @@
-# Spoolman CORS Setup V3 + Filament Tracker
+# Spoolman CORS Setup V3.1 + Filament Tracker
 
 **Complete server-side solution for Spoolman with CORS support and automatic filament tracking.**
 
@@ -18,14 +18,23 @@
 
 ## ⚡ Quick Setup
 
+### 0. Stop Existing Setup (IMPORTANT!)
+If you have existing Spoolman or CORS setup running:
+```bash
+# Stop your current setup first to avoid port conflicts
+docker-compose down
+# or
+docker stop [container-names]
+```
+
 ### 1. Download and Extract
-Download `SpoolmanCORS-Setup-V3.zip` and extract to your server.
+Download `SpoolmanCORS-Setup-V3.1.zip` and extract to your server.
 
 ### 2. Configure Printer IP
 Edit `docker-compose.yml` and update the RRF_URL:
 ```yaml
 environment:
-  - RRF_URL=http://192.168.1.100   # Change to your printer's IP
+  - RRF_URL=http://192.168.86.50   # Your printer's IP (pre-configured)
 ```
 
 ### 3. Start Services
@@ -44,8 +53,8 @@ All services should show "Up" status.
 
 ### Spoolman Server
 - **Internal Port:** 8000 
-- **External Port:** 7912
-- **Web Interface:** `http://your-server:7912`
+- **External Port:** 7914
+- **Web Interface:** `http://your-server:7914`
 - **Database:** SQLite with automatic backups
 
 ### CORS Proxy 
@@ -141,18 +150,20 @@ docker-compose up -d spoolman-tracker
 
 ## 📚 Integration with DWC Plugin
 
-The tracking service is designed to work seamlessly with **DuetWebControl Spoolman Plugin v0.5.0+**:
+The tracking service is designed to work seamlessly with **DuetWebControl Spoolman Plugin v0.5.1+**:
 
 1. **Install Plugin:** Install DWC plugin and connect to `http://your-server:7913`
 2. **Configure Spools:** Select spools for each extruder in the plugin
 3. **Automatic Tracking:** Server-side service automatically tracks usage
 4. **Real-time Updates:** Plugin shows server tracking status
 
+Note: Spoolman web interface is available at `http://your-server:7914`
+
 ## 🛡️ Security Notes
 
 - **Default CORS:** Allows all origins (`*`) for maximum compatibility
 - **Production Use:** Consider restricting CORS origins for security
-- **Firewall:** Only expose ports 7912 and 7913 as needed
+- **Firewall:** Only expose ports 7913 and 7914 as needed
 
 ## 📞 Support
 
@@ -161,5 +172,5 @@ The tracking service is designed to work seamlessly with **DuetWebControl Spoolm
 - **Docker Issues:** Check Docker and Docker Compose documentation
 
 ---
-**Spoolman CORS Setup V3** - Part of the DuetWebControl Spoolman Plugin project  
+**Spoolman CORS Setup V3.1** - Part of the DuetWebControl Spoolman Plugin project  
 License: GPL-3.0 | Author: Emil Vitus
