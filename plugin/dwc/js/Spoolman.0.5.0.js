@@ -93,7 +93,33 @@
           }
           return "";
         },
+        normalizeBridgeBaseUrl: function (input) {
+          var value = String(input || "").trim();
+          if (!value) {
+            return "";
+          }
+          if (!/^https?:\/\//i.test(value)) {
+            value = "http://" + value;
+          }
+          try {
+            var parsed = new URL(value);
+            if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+              return "";
+            }
+            if (!parsed.hostname) {
+              return "";
+            }
+            return parsed.origin;
+          } catch (_error) {
+            return "";
+          }
+        },
         tryBridgeHealth: async function (base, timeoutMs) {
+          var normalized = this.normalizeBridgeBaseUrl(base);
+          if (!normalized) {
+            return false;
+          }
+
           var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
           var timer = setTimeout(function () {
             if (controller) {
@@ -101,11 +127,15 @@
             }
           }, timeoutMs || 700);
           try {
-            var response = await fetch(base + "/api/v1/health", {
+            var response = await fetch(normalized + "/api/v1/health", {
               method: "GET",
               signal: controller ? controller.signal : undefined
             });
-            return response.ok;
+            if (!response.ok) {
+              return false;
+            }
+            var payload = await response.json();
+            return Boolean(payload && payload.ok === true);
           } catch (_error) {
             return false;
           } finally {
@@ -113,13 +143,26 @@
           }
         },
         connectToBridge: async function (base) {
-          var ok = await this.tryBridgeHealth(base, 1200);
-          if (!ok) {
+          var normalized = this.normalizeBridgeBaseUrl(base);
+          if (!normalized) {
+            this.connected = false;
+            this.serverUrl = "";
+            this.setToast("error", "Invalid bridge server URL. Use http://IP:9378");
             return false;
           }
-          this.serverUrl = base;
+
+          var ok = await this.tryBridgeHealth(normalized, 1200);
+          if (!ok) {
+            this.connected = false;
+            this.serverUrl = "";
+            this.setToast("error", "Could not reach bridge server at " + normalized);
+            return false;
+          }
+
+          this.serverUrl = normalized;
           this.connected = true;
-          this.rememberBridgeUrl(base);
+          this.manualServerUrl = normalized;
+          this.rememberBridgeUrl(normalized);
           this.setToast("success", "Connected to bridge server");
           return true;
         },
@@ -193,16 +236,14 @@
           return Object.keys(prefixes);
         },
         buildDiscoveryCandidates: function (includeSubnetScan, subnetPrefixes) {
+          var self = this;
           var candidates = [];
           var seen = {};
           var ports = [9378, 9377];
           var priorityHosts = [85, 1, 2, 10, 20, 50, 100, 150, 200, 254];
 
           function addCandidate(url) {
-            if (!url) {
-              return;
-            }
-            var base = url.trim().replace(/\/+$/, "");
+            var base = self.normalizeBridgeBaseUrl(url);
             if (!base || seen[base]) {
               return;
             }
@@ -264,9 +305,11 @@
           return null;
         },
         connectManualServer: async function () {
-          var manual = (this.manualServerUrl || "").trim().replace(/\/+$/, "");
+          var manual = this.normalizeBridgeBaseUrl(this.manualServerUrl);
           if (!manual) {
-            this.setToast("error", "Enter bridge server URL first (e.g. http://192.168.86.85:9378).");
+            this.connected = false;
+            this.serverUrl = "";
+            this.setToast("error", "Enter a valid URL (e.g. http://192.168.86.85:9378).");
             return false;
           }
           return this.connectToBridge(manual);
