@@ -14,6 +14,6 @@ test("resolveLanguage uses browser locale when setting is auto", () => {
 });
 
 test("messages fallback to english", () => {
-  assert.equal(getMessages("da").connected, "Forbundet");
-  assert.equal(getMessages("x").connected, "Connected");
+  assert.equal(getMessages("da").connectedPrefix, "Forbundet");
+  assert.equal(getMessages("x").connectedPrefix, "Connected");
 });

@@ -36,6 +36,10 @@ export function createTracker({ getSettings, saveSettings, getTrackingState, sav
 
     const previous = trackingState.lastExtruderPositions;
     const nextTotals = { ...trackingState.totalTrackedMmByTool };
+    const nextReportedTotals = { ...trackingState.totalReportedMmByTool };
+    const pollEvents = [];
+    let pollError = null;
+    let hadPositiveDelta = false;
 
     for (let i = 0; i < positions.length; i += 1) {
       const current = Number(positions[i]) || 0;
@@ -44,22 +48,38 @@ export function createTracker({ getSettings, saveSettings, getTrackingState, sav
       if (delta <= 0) {
         continue;
       }
+      hadPositiveDelta = true;
 
       const assignedSpoolId = Number(settings.toolSpoolMap[toolKey(i)]);
-      if (assignedSpoolId > 0) {
-        await spoolman.useSpoolLengthMm(assignedSpoolId, delta);
-      }
-
       const key = toolKey(i);
       nextTotals[key] = (Number(nextTotals[key]) || 0) + delta;
+
+      if (assignedSpoolId > 0) {
+        try {
+          await spoolman.useSpoolLengthMm(assignedSpoolId, delta);
+          nextReportedTotals[key] = (Number(nextReportedTotals[key]) || 0) + delta;
+          pollEvents.push(`${key}: reported ${delta.toFixed(2)}mm to spool #${assignedSpoolId}`);
+        } catch (error) {
+          pollError = `${key}: failed to report to spool #${assignedSpoolId}: ${error.message}`;
+          pollEvents.push(`${key}: report failed`);
+        }
+      } else {
+        pollEvents.push(`${key}: measured ${delta.toFixed(2)}mm (no spool assigned)`);
+      }
+    }
+
+    if (!hadPositiveDelta) {
+      pollEvents.push("No positive extrusion delta detected");
     }
 
     await saveTrackingState({
       ...trackingState,
       lastExtruderPositions: positions,
       totalTrackedMmByTool: nextTotals,
+      totalReportedMmByTool: nextReportedTotals,
       lastPollAt: new Date().toISOString(),
-      lastError: null
+      lastError: pollError,
+      lastEvent: pollEvents.join(" | ")
     });
   }
 
@@ -72,6 +92,7 @@ export function createTracker({ getSettings, saveSettings, getTrackingState, sav
         await saveTrackingState({
           ...state,
           lastError: null,
+          lastEvent: "Tracking disabled",
           lastPollAt: new Date().toISOString()
         });
         return;
@@ -79,6 +100,7 @@ export function createTracker({ getSettings, saveSettings, getTrackingState, sav
       await saveTrackingState({
         ...state,
         lastError: error.message,
+        lastEvent: `Poll failed: ${error.message}`,
         lastPollAt: new Date().toISOString()
       });
     }

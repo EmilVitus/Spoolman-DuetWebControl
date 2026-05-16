@@ -35,7 +35,9 @@
           },
           spools: [],
           openToolDropdown: "",
-          trackingActionBusy: false
+          trackingActionBusy: false,
+          discoveryBusy: false,
+          statusRefreshTimer: null
         };
       },
       methods: {
@@ -44,6 +46,17 @@
         },
         browserLocale: function () {
           return navigator.language || "en";
+        },
+        t: function (key, fallback) {
+          var msg = this.messages && this.messages[key];
+          return typeof msg === "string" && msg.length > 0 ? msg : (fallback || key);
+        },
+        formatMessage: function (key, fallback, values) {
+          var template = this.t(key, fallback);
+          var finalValues = values || {};
+          return template.replace(/\{(\w+)\}/g, function (_m, token) {
+            return finalValues[token] !== undefined ? String(finalValues[token]) : "";
+          });
         },
         normalizeHexColor: function (value) {
           var raw = String(value || "").trim().replace("#", "");
@@ -93,7 +106,7 @@
         getToolDisplayLabel: function (toolId) {
           var spool = this.getToolAssignedSpool(toolId);
           if (!spool) {
-            return "Not assigned";
+            return this.t("notAssigned", "Not assigned");
           }
           return "#" + spool.id + " - " + (spool.filament && spool.filament.name ? spool.filament.name : "Unknown");
         },
@@ -101,16 +114,28 @@
           var totals = this.trackingState && this.trackingState.totalTrackedMmByTool ? this.trackingState.totalTrackedMmByTool : {};
           return Number(totals[toolId] || 0);
         },
-        formatToolTrackedUsage: function (toolId) {
-          var mm = this.getToolTrackedUsageMm(toolId);
+        getToolReportedUsageMm: function (toolId) {
+          var totals = this.trackingState && this.trackingState.totalReportedMmByTool ? this.trackingState.totalReportedMmByTool : {};
+          return Number(totals[toolId] || 0);
+        },
+        formatUsageValue: function (mm) {
           if (!Number.isFinite(mm) || mm <= 0) {
-            return "Used: 0.0 mm";
+            return this.formatMessage("trackedUsageFormatMm", "{value} mm", { value: "0.0" });
           }
           var meters = mm / 1000;
           if (meters >= 1) {
-            return "Used: " + meters.toFixed(3) + " m (" + mm.toFixed(1) + " mm)";
+            return this.formatMessage("trackedUsageFormatMeters", "{meters} m ({mm} mm)", {
+              meters: meters.toFixed(3),
+              mm: mm.toFixed(1)
+            });
           }
-          return "Used: " + mm.toFixed(1) + " mm";
+          return this.formatMessage("trackedUsageFormatMm", "{value} mm", { value: mm.toFixed(1) });
+        },
+        formatToolTrackedUsage: function (toolId) {
+          var mm = this.getToolTrackedUsageMm(toolId);
+          var reportedMm = this.getToolReportedUsageMm(toolId);
+          return this.t("usageMeasured", "Measured") + ": " + this.formatUsageValue(mm) + " | " +
+            this.t("usageReported", "Reported") + ": " + this.formatUsageValue(reportedMm);
         },
         toggleToolDropdown: function (toolId) {
           this.openToolDropdown = this.openToolDropdown === toolId ? "" : toolId;
@@ -226,7 +251,8 @@
           if (!normalized) {
             this.connected = false;
             this.serverUrl = "";
-            this.setToast("error", "Invalid bridge server URL. Use http://IP:9378");
+            this.stopStatusRefresh();
+            this.setToast("error", this.t("invalidBridgeUrl", "Invalid bridge server URL. Use http://IP:9378"));
             return false;
           }
 
@@ -234,7 +260,8 @@
           if (!ok) {
             this.connected = false;
             this.serverUrl = "";
-            this.setToast("error", "Could not reach bridge server at " + normalized);
+            this.stopStatusRefresh();
+            this.setToast("error", this.formatMessage("unreachableBridgeUrl", "Could not reach bridge server at {url}", { url: normalized }));
             return false;
           }
 
@@ -242,7 +269,7 @@
           this.connected = true;
           this.manualServerUrl = normalized;
           this.rememberBridgeUrl(normalized);
-          this.setToast("success", "Connected to bridge server");
+          this.setToast("success", this.t("connectedBridge", "Connected to bridge server"));
           return true;
         },
         discoverLocalIPv4Hint: function () {
@@ -365,6 +392,58 @@
 
           return candidates;
         },
+        fetchDiscoveryHintsFromUrl: async function (base) {
+          var normalized = this.normalizeBridgeBaseUrl(base);
+          if (!normalized) {
+            return [];
+          }
+          try {
+            var response = await fetch(normalized + "/api/v1/discovery", { method: "GET" });
+            if (!response.ok) {
+              return [];
+            }
+            var payload = await response.json();
+            var urls = [];
+            if (Array.isArray(payload.suggestedUrls)) {
+              urls = urls.concat(payload.suggestedUrls);
+            }
+            if (Array.isArray(payload.mdnsUrls)) {
+              urls = urls.concat(payload.mdnsUrls);
+            }
+            if (payload.suggestedUrl) {
+              urls.push(payload.suggestedUrl);
+            }
+            return urls;
+          } catch (_error) {
+            return [];
+          }
+        },
+        fetchDiscoveryHints: async function (initialCandidates) {
+          var hints = [];
+          var hintSources = [];
+          var self = this;
+          var currentHost = window.location.hostname;
+          if (currentHost) {
+            hintSources.push(window.location.protocol + "//" + currentHost + ":9378");
+            hintSources.push(window.location.protocol + "//" + currentHost + ":9377");
+          }
+          hintSources.push(this.getRememberedBridgeUrl());
+          hintSources.push(this.manualServerUrl);
+          hintSources.push("http://spoolman-bridge.local:9378");
+          hintSources.push("http://spoolman-bridge.local:9377");
+
+          if (Array.isArray(initialCandidates)) {
+            hintSources = hintSources.concat(initialCandidates.slice(0, 12));
+          }
+
+          for (var i = 0; i < hintSources.length; i += 1) {
+            var fromSource = await self.fetchDiscoveryHintsFromUrl(hintSources[i]);
+            if (fromSource.length) {
+              hints = hints.concat(fromSource);
+            }
+          }
+          return hints;
+        },
         probeDiscoveryCandidates: async function (candidates) {
           var batchSize = 48;
           for (var start = 0; start < candidates.length; start += batchSize) {
@@ -386,13 +465,32 @@
         loadConnectedData: async function () {
           await Promise.all([this.loadSettings(), this.loadStatus()]);
           await this.loadSpools();
+          this.startStatusRefresh();
+        },
+        startStatusRefresh: function () {
+          var self = this;
+          this.stopStatusRefresh();
+          this.statusRefreshTimer = setInterval(function () {
+            if (!self.connected) {
+              self.stopStatusRefresh();
+              return;
+            }
+            self.loadStatus();
+          }, 2500);
+        },
+        stopStatusRefresh: function () {
+          if (this.statusRefreshTimer) {
+            clearInterval(this.statusRefreshTimer);
+            this.statusRefreshTimer = null;
+          }
         },
         connectManualServer: async function () {
           var manual = this.normalizeBridgeBaseUrl(this.manualServerUrl);
           if (!manual) {
             this.connected = false;
             this.serverUrl = "";
-            this.setToast("error", "Enter a valid URL (e.g. http://192.168.86.85:9378).");
+            this.stopStatusRefresh();
+            this.setToast("error", this.t("enterValidUrl", "Enter a valid URL (e.g. http://192.168.86.85:9378)."));
             return false;
           }
           var connected = await this.connectToBridge(manual);
@@ -410,29 +508,37 @@
         },
         discoverServer: async function (options) {
           options = options || {};
-          var includeSubnetScan = options.includeSubnetScan !== false;
-          var subnetPrefixes = await this.getSubnetPrefixes();
-          var quickCandidates = this.buildDiscoveryCandidates(false, subnetPrefixes);
-          var found = await this.probeDiscoveryCandidates(quickCandidates);
-          if (found) {
-            return this.connectToBridge(found);
-          }
-
-          if (includeSubnetScan && subnetPrefixes.length > 0) {
-            this.setToast("success", "Searching local network for bridge server...");
-            var subnetCandidates = this.buildDiscoveryCandidates(true, subnetPrefixes);
-            found = await this.probeDiscoveryCandidates(subnetCandidates);
+          const includeSubnetScan = options.includeSubnetScan !== false;
+          this.discoveryBusy = true;
+          try {
+            const subnetPrefixes = await this.getSubnetPrefixes();
+            let quickCandidates = this.buildDiscoveryCandidates(false, subnetPrefixes);
+            const hintCandidates = await this.fetchDiscoveryHints(quickCandidates);
+            quickCandidates = quickCandidates.concat(hintCandidates);
+            let found = await this.probeDiscoveryCandidates(quickCandidates);
             if (found) {
               return this.connectToBridge(found);
             }
-          }
 
-          this.connected = false;
-          this.setToast(
-            "error",
-            "Could not discover server. Enter IP in Manual server URL and click Connect (e.g. http://192.168.86.85:9378)."
-          );
-          return false;
+            if (includeSubnetScan && subnetPrefixes.length > 0) {
+              this.setToast("success", this.t("searchingNetwork", "Searching local network for bridge server..."));
+              const subnetCandidates = this.buildDiscoveryCandidates(true, subnetPrefixes);
+              found = await this.probeDiscoveryCandidates(subnetCandidates);
+              if (found) {
+                return this.connectToBridge(found);
+              }
+            }
+
+            this.connected = false;
+            this.stopStatusRefresh();
+            this.setToast(
+              "error",
+              this.t("discoverFailed", "Could not discover server. Enter IP in Manual server URL and click Connect.")
+            );
+            return false;
+          } finally {
+            this.discoveryBusy = false;
+          }
         },
         loadSettings: async function () {
           this.loading = true;
@@ -452,6 +558,11 @@
             this.loading = false;
           }
         },
+        setLanguage: async function (languageValue) {
+          this.settings.language = languageValue;
+          await this.saveSettings();
+          await this.loadSettings();
+        },
         saveSettings: async function () {
           this.loading = true;
           this.clearToast();
@@ -467,7 +578,7 @@
             }
             var payload = await response.json();
             this.settings = payload.settings;
-            this.setToast("success", "Settings saved on server");
+            this.setToast("success", this.t("saved", "Settings saved"));
           } catch (error) {
             this.setToast("error", error.message);
           } finally {
@@ -525,7 +636,7 @@
               throw new Error("Failed to change tracking state");
             }
             await this.loadStatus();
-            this.setToast("success", run ? "Tracking started." : "Tracking stopped.");
+            this.setToast("success", run ? this.t("trackingStartedMessage", "Tracking started.") : this.t("trackingStoppedMessage", "Tracking stopped."));
           } catch (error) {
             this.setToast("error", error.message);
           } finally {
@@ -548,6 +659,9 @@
         this.manualServerUrl = this.getRememberedBridgeUrl();
         this.discoverAndLoad();
       },
+      beforeDestroy: function () {
+        this.stopStatusRefresh();
+      },
       render: function (h) {
         var self = this;
         var tools = this.toolList();
@@ -569,7 +683,7 @@
                   self.selectToolSpool(toolId, "");
                 }
               }
-            }, "Not assigned")
+            }, self.t("notAssigned", "Not assigned"))
           ];
 
           for (var i = 0; i < self.spools.length; i += 1) {
@@ -615,16 +729,16 @@
         });
 
         return h("div", { class: "spoolman-container" }, [
-          h("h2", "Spoolman Integration 0.5.0"),
-          h("p", "Tracking runs on server side. Browser can be closed safely."),
+          h("h2", this.t("appTitle", "Spoolman Integration 0.5.0")),
+          h("p", this.t("appSubtitle", "Tracking runs on server side. Browser can be closed safely.")),
 
           this.error ? h("div", { class: "spoolman-error" }, this.error) : null,
           this.success ? h("div", { class: "spoolman-success" }, this.success) : null,
 
           h("div", { class: "spoolman-card" }, [
-            h("h3", "Bridge server"),
+            h("h3", this.t("bridgeServer", "Bridge server")),
             h("div", { class: "spoolman-row" }, [
-              h("label", { class: "spoolman-label" }, "Manual server URL"),
+              h("label", { class: "spoolman-label" }, this.t("manualServerUrl", "Manual server URL")),
               h("input", {
                 class: "spoolman-input",
                 attrs: { type: "text", placeholder: "http://192.168.x.x:9378" },
@@ -637,33 +751,58 @@
               })
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("button", { class: "spoolman-button", on: { click: function () { self.connectManualServer(); } } }, "Connect"),
-              h("button", { class: "spoolman-button", on: { click: function () { self.discoverAndLoad(); } } }, "Discover server"),
-              h("span", { class: "spoolman-status" }, this.connected ? "Connected: " + this.serverUrl : "Not connected")
+              h("button", { class: "spoolman-button", on: { click: function () { self.connectManualServer(); } } }, this.t("connect", "Connect")),
+              h("button", { class: "spoolman-button", attrs: { disabled: this.discoveryBusy }, on: { click: function () { self.discoverAndLoad(); } } }, this.discoveryBusy ? this.t("pleaseWait", "Please wait...") : this.t("discoverServer", "Discover server")),
+              h("span", { class: "spoolman-status" }, this.connected ? this.t("connectedPrefix", "Connected") + ": " + this.serverUrl : this.t("notConnected", "Not connected"))
             ])
           ]),
 
           this.connected ? h("div", { class: "spoolman-card" }, [
-            h("h3", "Settings"),
+            h("h3", this.t("toolToSpoolMapping", "Tool to spool mapping")),
+            toolRows
+          ]) : null,
+
+          this.connected ? h("div", { class: "spoolman-card" }, [
+            h("h3", this.t("tracking", "Tracking")),
             h("div", { class: "spoolman-row" }, [
-              h("label", { class: "spoolman-label" }, "Language"),
+              h("span", {
+                class: "spoolman-tracking-badge " + (this.trackingRunning ? "is-running" : "is-stopped")
+              }, this.trackingRunning ? this.t("trackingRunning", "Tracking: Running") : this.t("trackingStopped", "Tracking: Stopped"))
+            ]),
+            h("p", this.t("lastPoll", "Last poll") + ": " + (this.trackingState.lastPollAt || this.t("never", "Never"))),
+            this.trackingRunning && this.trackingState.lastError ? h("p", { class: "spoolman-error" }, this.trackingState.lastError) : null,
+            this.trackingState.lastEvent ? h("p", { class: "spoolman-muted" }, this.trackingState.lastEvent) : null,
+            h("div", { class: "spoolman-row" }, [
+              h("button", {
+                class: "spoolman-button " + (this.trackingRunning ? "is-danger" : "is-success"),
+                attrs: { disabled: this.trackingActionBusy },
+                on: { click: function () { self.toggleTracking(); } }
+              }, this.trackingActionBusy ? this.t("pleaseWait", "Please wait...") : (this.trackingRunning ? this.t("stopTracking", "Stop tracking") : this.t("startTracking", "Start tracking"))),
+              h("button", { class: "spoolman-button", on: { click: this.pollNow } }, this.t("pollNow", "Poll now"))
+            ])
+          ]) : null,
+
+          this.connected ? h("div", { class: "spoolman-card" }, [
+            h("h3", this.t("settings", "Settings")),
+            h("div", { class: "spoolman-row" }, [
+              h("label", { class: "spoolman-label" }, this.t("language", "Language")),
               h("select", {
                 class: "spoolman-input",
                 domProps: { value: this.settings.language },
                 on: {
                   change: function (event) {
-                    self.settings.language = event.target.value;
+                    self.setLanguage(event.target.value);
                   }
                 }
               }, [
-                h("option", { domProps: { value: "auto" } }, "Auto"),
-                h("option", { domProps: { value: "en" } }, "English"),
-                h("option", { domProps: { value: "da" } }, "Dansk")
+                h("option", { domProps: { value: "auto" } }, this.t("auto", "Auto")),
+                h("option", { domProps: { value: "en" } }, this.t("english", "English")),
+                h("option", { domProps: { value: "da" } }, this.t("danish", "Dansk"))
               ]),
-              h("span", { class: "spoolman-muted" }, "Resolved: " + this.resolvedLanguage)
+              h("span", { class: "spoolman-muted" }, this.t("resolvedLanguage", "Resolved") + ": " + this.resolvedLanguage)
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("label", { class: "spoolman-label" }, "Spoolman URL"),
+              h("label", { class: "spoolman-label" }, this.t("spoolmanUrl", "Spoolman URL")),
               h("input", {
                 class: "spoolman-input",
                 attrs: { type: "text", placeholder: "http://spoolman:7912" },
@@ -672,7 +811,7 @@
               })
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("label", { class: "spoolman-label" }, "RRF URL"),
+              h("label", { class: "spoolman-label" }, this.t("rrfUrl", "RRF URL")),
               h("input", {
                 class: "spoolman-input",
                 attrs: { type: "text", placeholder: "http://duet" },
@@ -681,7 +820,7 @@
               })
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("label", { class: "spoolman-label" }, "RRF password"),
+              h("label", { class: "spoolman-label" }, this.t("rrfPassword", "RRF password")),
               h("input", {
                 class: "spoolman-input",
                 attrs: { type: "password", placeholder: "reprap" },
@@ -690,7 +829,7 @@
               })
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("label", { class: "spoolman-label" }, "Hotend count"),
+              h("label", { class: "spoolman-label" }, this.t("hotendCount", "Hotend count")),
               h("input", {
                 class: "spoolman-input",
                 attrs: { type: "number", min: 1, max: 16 },
@@ -699,32 +838,8 @@
               })
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("button", { class: "spoolman-button", on: { click: this.saveSettings } }, this.loading ? "Saving..." : "Save settings"),
-              h("button", { class: "spoolman-button", on: { click: this.loadSpools } }, "Refresh spools")
-            ])
-          ]) : null,
-
-          this.connected ? h("div", { class: "spoolman-card" }, [
-            h("h3", "Tool to spool mapping"),
-            toolRows
-          ]) : null,
-
-          this.connected ? h("div", { class: "spoolman-card" }, [
-            h("h3", "Tracking"),
-            h("div", { class: "spoolman-row" }, [
-              h("span", {
-                class: "spoolman-tracking-badge " + (this.trackingRunning ? "is-running" : "is-stopped")
-              }, this.trackingRunning ? "Tracking: Running" : "Tracking: Stopped")
-            ]),
-            h("p", "Last poll: " + (this.trackingState.lastPollAt || "Never")),
-            this.trackingRunning && this.trackingState.lastError ? h("p", { class: "spoolman-error" }, this.trackingState.lastError) : null,
-            h("div", { class: "spoolman-row" }, [
-              h("button", {
-                class: "spoolman-button " + (this.trackingRunning ? "is-danger" : "is-success"),
-                attrs: { disabled: this.trackingActionBusy },
-                on: { click: function () { self.toggleTracking(); } }
-              }, this.trackingActionBusy ? "Please wait..." : (this.trackingRunning ? "Stop tracking" : "Start tracking")),
-              h("button", { class: "spoolman-button", on: { click: this.pollNow } }, "Poll now")
+              h("button", { class: "spoolman-button", on: { click: this.saveSettings } }, this.loading ? this.t("saving", "Saving settings...") : this.t("saveSettings", "Save settings")),
+              h("button", { class: "spoolman-button", on: { click: this.loadSpools } }, this.t("refreshSpools", "Refresh spools"))
             ])
           ]) : null
         ]);

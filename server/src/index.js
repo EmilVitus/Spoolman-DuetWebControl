@@ -58,12 +58,20 @@ function sanitizeSettingsUpdate(input) {
 
 function getDiscoveryPayload() {
   const lanAddresses = getLanIPv4Addresses();
+  const knownPorts = [9378, 9377];
+  const suggestedUrls = [];
+  for (const address of lanAddresses) {
+    for (const port of knownPorts) {
+      suggestedUrls.push(`http://${address}:${port}`);
+    }
+  }
   return {
     method: "lan-ip-preferred",
     mdnsHostname: "spoolman-bridge.local",
     port: PORT,
     lanAddresses,
-    suggestedUrls: buildBridgeBaseUrls(PORT, lanAddresses),
+    suggestedUrls,
+    mdnsUrls: knownPorts.map((port) => `http://spoolman-bridge.local:${port}`),
     fallback: "manual"
   };
 }
@@ -133,7 +141,11 @@ app.get("/api/v1/status", (_req, res) => {
 });
 
 app.post("/api/v1/tracking/start", async (_req, res) => {
-  trackingState = await saveTrackingState({ ...trackingState, trackingEnabled: true });
+  trackingState = await saveTrackingState({
+    ...trackingState,
+    trackingEnabled: true,
+    lastEvent: "Tracking enabled"
+  });
   tracker.start();
   res.json({ ok: true, trackingRunning: tracker.isRunning() });
 });
@@ -142,7 +154,8 @@ app.post("/api/v1/tracking/stop", async (_req, res) => {
   trackingState = await saveTrackingState({
     ...trackingState,
     trackingEnabled: false,
-    lastError: null
+    lastError: null,
+    lastEvent: "Tracking stopped by user"
   });
   tracker.stop();
   res.json({ ok: true, trackingRunning: tracker.isRunning() });

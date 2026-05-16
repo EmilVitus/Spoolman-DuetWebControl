@@ -25,8 +25,10 @@ const defaultTrackingState = Object.freeze({
   trackingEnabled: true,
   lastExtruderPositions: [],
   totalTrackedMmByTool: {},
+  totalReportedMmByTool: {},
   lastPollAt: null,
-  lastError: null
+  lastError: null,
+  lastEvent: null
 });
 
 async function ensureDataDir() {
@@ -89,6 +91,7 @@ export function mergeTrackingState(input) {
     ...defaultTrackingState,
     ...input,
     totalTrackedMmByTool: { ...(input?.totalTrackedMmByTool ?? {}) },
+    totalReportedMmByTool: { ...(input?.totalReportedMmByTool ?? {}) },
     lastExtruderPositions: Array.isArray(input?.lastExtruderPositions)
       ? [...input.lastExtruderPositions]
       : []
