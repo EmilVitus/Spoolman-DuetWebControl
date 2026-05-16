@@ -118,9 +118,43 @@ select.spoolman-input option:checked {
   background-color: rgba(127, 127, 127, 0.22);
 }
 
+.spoolman-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spoolman-button.is-success {
+  background-color: rgba(67, 160, 71, 0.25);
+  border-color: rgba(67, 160, 71, 0.65);
+}
+
+.spoolman-button.is-danger {
+  background-color: rgba(239, 83, 80, 0.24);
+  border-color: rgba(239, 83, 80, 0.65);
+}
+
 .spoolman-status {
   font-weight: 600;
   color: inherit;
+}
+
+.spoolman-tracking-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.spoolman-tracking-badge.is-running {
+  background-color: rgba(67, 160, 71, 0.25);
+  color: #81c784;
+}
+
+.spoolman-tracking-badge.is-stopped {
+  background-color: rgba(239, 83, 80, 0.22);
+  color: #ef9a9a;
 }
 
 .spoolman-muted {

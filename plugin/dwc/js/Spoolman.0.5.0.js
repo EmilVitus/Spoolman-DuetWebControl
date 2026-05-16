@@ -34,7 +34,8 @@
             lastError: null
           },
           spools: [],
-          openToolDropdown: ""
+          openToolDropdown: "",
+          trackingActionBusy: false
         };
       },
       methods: {
@@ -501,6 +502,7 @@
           }
         },
         setTracking: async function (run) {
+          this.trackingActionBusy = true;
           try {
             var path = run ? "/api/v1/tracking/start" : "/api/v1/tracking/stop";
             var response = await fetch(this.apiUrl(path), { method: "POST" });
@@ -508,9 +510,15 @@
               throw new Error("Failed to change tracking state");
             }
             await this.loadStatus();
+            this.setToast("success", run ? "Tracking started." : "Tracking stopped.");
           } catch (error) {
             this.setToast("error", error.message);
+          } finally {
+            this.trackingActionBusy = false;
           }
+        },
+        toggleTracking: async function () {
+          await this.setTracking(!this.trackingRunning);
         },
         pollNow: async function () {
           try {
@@ -687,12 +695,19 @@
 
           this.connected ? h("div", { class: "spoolman-card" }, [
             h("h3", "Tracking"),
-            h("p", this.trackingRunning ? "Tracking is running on the server." : "Tracking is stopped."),
+            h("div", { class: "spoolman-row" }, [
+              h("span", {
+                class: "spoolman-tracking-badge " + (this.trackingRunning ? "is-running" : "is-stopped")
+              }, this.trackingRunning ? "Tracking: Running" : "Tracking: Stopped")
+            ]),
             h("p", "Last poll: " + (this.trackingState.lastPollAt || "Never")),
             this.trackingState.lastError ? h("p", { class: "spoolman-error" }, this.trackingState.lastError) : null,
             h("div", { class: "spoolman-row" }, [
-              h("button", { class: "spoolman-button", on: { click: function () { self.setTracking(true); } } }, "Start tracking"),
-              h("button", { class: "spoolman-button", on: { click: function () { self.setTracking(false); } } }, "Stop tracking"),
+              h("button", {
+                class: "spoolman-button " + (this.trackingRunning ? "is-danger" : "is-success"),
+                attrs: { disabled: this.trackingActionBusy },
+                on: { click: function () { self.toggleTracking(); } }
+              }, this.trackingActionBusy ? "Please wait..." : (this.trackingRunning ? "Stop tracking" : "Start tracking")),
               h("button", { class: "spoolman-button", on: { click: this.pollNow } }, "Poll now")
             ])
           ]) : null
