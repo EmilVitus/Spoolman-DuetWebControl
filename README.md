@@ -24,7 +24,7 @@ Version `0.5.0` is a clean rewrite with a server-driven architecture:
   - RepRapFirmware (`rr_connect`, `rr_model`)
   - Spoolman (`/api/v1`)
 
-## Install bridge server (Debian/Ubuntu, one command)
+## ~~Install bridge server (Debian/Ubuntu, one command)~~
 
 ~~This always installs the latest stable GitHub release (no manual zip transfer):~~
 
@@ -59,6 +59,25 @@ sudo systemctl status spoolman-bridge
 curl http://127.0.0.1:9377/api/v1/health
 ```
 
+## DWC plugin installation
+
+1. Build plugin artifact.
+2. In DWC open **Settings -> Plugins -> Install Plugin**.
+3. Upload `dist/Spoolman-0.5.0.zip`.
+4. Open **Job -> Spoolman** and connect/discover the bridge server.
+
+## Server settings model
+
+Stored in `server/data/settings.json`:
+
+- `language`: `auto | en | da` (default `auto`)
+- `spoolmanBaseUrl`: manual URL (required)
+- `hotendCount`: integer >= 1 (UI supports 5+)
+- `toolSpoolMap`: map (`T0`, `T1`, ...)
+- `rrf.baseUrl`, `rrf.password`, `rrf.pollIntervalMs`
+
+No browser cookies or localStorage are required for tracking or core configuration.
+
 ## Developer install (from repository)
 
 ```bash
@@ -78,22 +97,3 @@ This creates:
 
 - `dist/Spoolman-0.5.0.zip` (DWC plugin)
 - `dist/spoolman-bridge-server-0.5.0.zip` (server package)
-
-## DWC plugin installation
-
-1. Build plugin artifact.
-2. In DWC open **Settings -> Plugins -> Install Plugin**.
-3. Upload `dist/Spoolman-0.5.0.zip`.
-4. Open **Job -> Spoolman** and connect/discover the bridge server.
-
-## Server settings model
-
-Stored in `server/data/settings.json`:
-
-- `language`: `auto | en | da` (default `auto`)
-- `spoolmanBaseUrl`: manual URL (required)
-- `hotendCount`: integer >= 1 (UI supports 5+)
-- `toolSpoolMap`: map (`T0`, `T1`, ...)
-- `rrf.baseUrl`, `rrf.password`, `rrf.pollIntervalMs`
-
-No browser cookies or localStorage are required for tracking or core configuration.
