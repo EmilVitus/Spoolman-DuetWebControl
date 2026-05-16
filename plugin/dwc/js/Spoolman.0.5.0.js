@@ -304,6 +304,10 @@
           }
           return null;
         },
+        loadConnectedData: async function () {
+          await Promise.all([this.loadSettings(), this.loadStatus()]);
+          await this.loadSpools();
+        },
         connectManualServer: async function () {
           var manual = this.normalizeBridgeBaseUrl(this.manualServerUrl);
           if (!manual) {
@@ -312,7 +316,18 @@
             this.setToast("error", "Enter a valid URL (e.g. http://192.168.86.85:9378).");
             return false;
           }
-          return this.connectToBridge(manual);
+          var connected = await this.connectToBridge(manual);
+          if (connected) {
+            await this.loadConnectedData();
+          }
+          return connected;
+        },
+        discoverAndLoad: async function (options) {
+          var found = await this.discoverServer(options);
+          if (found) {
+            await this.loadConnectedData();
+          }
+          return found;
         },
         discoverServer: async function (options) {
           options = options || {};
@@ -444,16 +459,8 @@
         }
       },
       mounted: function () {
-        var self = this;
         this.manualServerUrl = this.getRememberedBridgeUrl();
-        this.discoverServer().then(function (found) {
-          if (!found) {
-            return;
-          }
-          Promise.all([self.loadSettings(), self.loadStatus()]).then(function () {
-            self.loadSpools();
-          });
-        });
+        this.discoverAndLoad();
       },
       render: function (h) {
         var self = this;
@@ -502,7 +509,7 @@
             ]),
             h("div", { class: "spoolman-row" }, [
               h("button", { class: "spoolman-button", on: { click: function () { self.connectManualServer(); } } }, "Connect"),
-              h("button", { class: "spoolman-button", on: { click: function () { self.discoverServer(); } } }, "Discover server"),
+              h("button", { class: "spoolman-button", on: { click: function () { self.discoverAndLoad(); } } }, "Discover server"),
               h("span", { class: "spoolman-status" }, this.connected ? "Connected: " + this.serverUrl : "Not connected")
             ])
           ]),
