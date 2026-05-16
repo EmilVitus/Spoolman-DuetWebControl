@@ -83,9 +83,8 @@ install_release() {
   require_command unzip
   mkdir -p "${INSTALL_DIR}"
 
-  local tmp_dir=""
+  local tmp_dir
   tmp_dir="$(mktemp -d)"
-  trap '[[ -n "${tmp_dir}" ]] && rm -rf "${tmp_dir}"' EXIT
 
   curl -fsSL "${asset_url}" -o "${tmp_dir}/spoolman-bridge-server-nightly.zip"
   unzip -qo "${tmp_dir}/spoolman-bridge-server-nightly.zip" -d "${tmp_dir}/extract"
@@ -93,6 +92,7 @@ install_release() {
   rm -rf "${INSTALL_DIR:?}/"*
   cp -a "${tmp_dir}/extract/." "${INSTALL_DIR}/"
   mkdir -p "${INSTALL_DIR}/data"
+  rm -rf "${tmp_dir}"
 
   cd "${INSTALL_DIR}"
   npm install --omit=dev
