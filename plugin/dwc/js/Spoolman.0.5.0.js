@@ -97,6 +97,21 @@
           }
           return "#" + spool.id + " - " + (spool.filament && spool.filament.name ? spool.filament.name : "Unknown");
         },
+        getToolTrackedUsageMm: function (toolId) {
+          var totals = this.trackingState && this.trackingState.totalTrackedMmByTool ? this.trackingState.totalTrackedMmByTool : {};
+          return Number(totals[toolId] || 0);
+        },
+        formatToolTrackedUsage: function (toolId) {
+          var mm = this.getToolTrackedUsageMm(toolId);
+          if (!Number.isFinite(mm) || mm <= 0) {
+            return "Used: 0.0 mm";
+          }
+          var meters = mm / 1000;
+          if (meters >= 1) {
+            return "Used: " + meters.toFixed(3) + " m (" + mm.toFixed(1) + " mm)";
+          }
+          return "Used: " + mm.toFixed(1) + " mm";
+        },
         toggleToolDropdown: function (toolId) {
           this.openToolDropdown = this.openToolDropdown === toolId ? "" : toolId;
         },
@@ -594,7 +609,8 @@
                 }
               }, self.getToolDisplayLabel(toolId)),
               dropdownOpen ? h("div", { class: "spoolman-dropdown-menu" }, optionRows) : null
-            ])
+            ]),
+            h("span", { class: "spoolman-tool-usage" }, self.formatToolTrackedUsage(toolId))
           ]);
         });
 
@@ -701,7 +717,7 @@
               }, this.trackingRunning ? "Tracking: Running" : "Tracking: Stopped")
             ]),
             h("p", "Last poll: " + (this.trackingState.lastPollAt || "Never")),
-            this.trackingState.lastError ? h("p", { class: "spoolman-error" }, this.trackingState.lastError) : null,
+            this.trackingRunning && this.trackingState.lastError ? h("p", { class: "spoolman-error" }, this.trackingState.lastError) : null,
             h("div", { class: "spoolman-row" }, [
               h("button", {
                 class: "spoolman-button " + (this.trackingRunning ? "is-danger" : "is-success"),

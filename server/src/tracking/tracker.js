@@ -68,6 +68,14 @@ export function createTracker({ getSettings, saveSettings, getTrackingState, sav
       await pollOnce();
     } catch (error) {
       const state = getTrackingState();
+      if (!state.trackingEnabled) {
+        await saveTrackingState({
+          ...state,
+          lastError: null,
+          lastPollAt: new Date().toISOString()
+        });
+        return;
+      }
       await saveTrackingState({
         ...state,
         lastError: error.message,

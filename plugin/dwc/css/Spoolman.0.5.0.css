@@ -105,6 +105,12 @@ select.spoolman-input option:checked {
   border-bottom: none;
 }
 
+.spoolman-tool-usage {
+  font-size: 0.86rem;
+  opacity: 0.85;
+  min-width: 170px;
+}
+
 .spoolman-button {
   padding: 7px 12px;
   color: inherit;

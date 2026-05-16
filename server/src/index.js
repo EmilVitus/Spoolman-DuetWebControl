@@ -139,7 +139,11 @@ app.post("/api/v1/tracking/start", async (_req, res) => {
 });
 
 app.post("/api/v1/tracking/stop", async (_req, res) => {
-  trackingState = await saveTrackingState({ ...trackingState, trackingEnabled: false });
+  trackingState = await saveTrackingState({
+    ...trackingState,
+    trackingEnabled: false,
+    lastError: null
+  });
   tracker.stop();
   res.json({ ok: true, trackingRunning: tracker.isRunning() });
 });
