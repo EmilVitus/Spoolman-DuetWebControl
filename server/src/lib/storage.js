@@ -16,7 +16,7 @@ const defaultSettings = Object.freeze({
   toolSpoolMap: {},
   rrf: {
     baseUrl: "",
-    password: "",
+    password: "reprap",
     pollIntervalMs: 4000
   }
 });

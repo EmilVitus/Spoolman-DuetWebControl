@@ -21,7 +21,7 @@
             toolSpoolMap: {},
             rrf: {
               baseUrl: "",
-              password: "",
+              password: "reprap",
               pollIntervalMs: 4000
             }
           },
@@ -555,7 +555,7 @@
               h("label", { class: "spoolman-label" }, "RRF password"),
               h("input", {
                 class: "spoolman-input",
-                attrs: { type: "password", placeholder: "Optional" },
+                attrs: { type: "password", placeholder: "reprap" },
                 domProps: { value: this.settings.rrf.password || "" },
                 on: { input: function (event) { self.settings.rrf.password = event.target.value; } }
               })
