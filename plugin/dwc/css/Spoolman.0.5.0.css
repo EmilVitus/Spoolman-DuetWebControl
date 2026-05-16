@@ -1,10 +1,11 @@
 .spoolman-container {
   padding: 16px;
   max-width: 900px;
+  color: inherit;
 }
 
 .spoolman-card {
-  border: 1px solid #d6dbe2;
+  border: 1px solid rgba(127, 127, 127, 0.35);
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 12px;
@@ -21,32 +22,55 @@
 .spoolman-label {
   width: 140px;
   font-weight: 600;
+  color: inherit;
 }
 
 .spoolman-input {
   min-width: 260px;
-  padding: 6px;
+  padding: 6px 8px;
+  color: inherit;
+  background-color: rgba(127, 127, 127, 0.12);
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  border-radius: 4px;
+}
+
+.spoolman-input::placeholder {
+  color: inherit;
+  opacity: 0.55;
+}
+
+.spoolman-input:focus {
+  outline: none;
+  border-color: rgba(127, 127, 127, 0.75);
 }
 
 .spoolman-button {
   padding: 7px 12px;
-  border: 1px solid #888;
+  color: inherit;
+  background-color: rgba(127, 127, 127, 0.12);
+  border: 1px solid rgba(127, 127, 127, 0.4);
   border-radius: 4px;
   cursor: pointer;
 }
 
+.spoolman-button:hover {
+  background-color: rgba(127, 127, 127, 0.22);
+}
+
 .spoolman-status {
   font-weight: 600;
+  color: inherit;
 }
 
 .spoolman-muted {
   opacity: 0.7;
+  color: inherit;
 }
 
 .spoolman-error {
-  color: #a32f2f;
+  color: #e57373;
 }
 
 .spoolman-success {
-  color: #236b30;
+  color: #81c784;
 }
