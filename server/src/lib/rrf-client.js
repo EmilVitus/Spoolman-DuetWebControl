@@ -21,6 +21,10 @@ export function createRrfClient(config) {
   const password = config?.password ?? "";
   let sessionKey = "";
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   async function connect() {
     if (!baseUrl) {
       throw new Error("RRF base URL is not configured");
@@ -45,20 +49,46 @@ export function createRrfClient(config) {
     }
 
     const headers = sessionKey ? { "X-Session-Key": sessionKey } : {};
-    const response = await fetch(`${baseUrl}/rr_model?key=move`, { headers });
-    if (response.status === 401 || response.status === 403) {
-      sessionKey = "";
-      await connect();
-      return fetchMoveModel();
-    }
-    if (!response.ok) {
-      throw new Error(`RRF rr_model failed (${response.status})`);
+    const retryDelaysMs = [0, 300, 800];
+
+    for (let attempt = 0; attempt < retryDelaysMs.length; attempt += 1) {
+      if (retryDelaysMs[attempt] > 0) {
+        await sleep(retryDelaysMs[attempt]);
+      }
+
+      const response = await fetch(`${baseUrl}/rr_model?key=move`, { headers });
+      if (response.status === 401 || response.status === 403) {
+        sessionKey = "";
+        await connect();
+        return fetchMoveModel();
+      }
+
+      // RRF/DSF can intermittently return 503 while object model is busy.
+      // Retry a couple of times and degrade gracefully if it persists.
+      if (response.status === 503) {
+        if (attempt < retryDelaysMs.length - 1) {
+          continue;
+        }
+        return {
+          raw: null,
+          extruderPositions: []
+        };
+      }
+
+      if (!response.ok) {
+        throw new Error(`RRF rr_model failed (${response.status})`);
+      }
+
+      const payload = await response.json();
+      return {
+        raw: payload,
+        extruderPositions: normalizeExtruderPositions(payload)
+      };
     }
 
-    const payload = await response.json();
     return {
-      raw: payload,
-      extruderPositions: normalizeExtruderPositions(payload)
+      raw: null,
+      extruderPositions: []
     };
   }
 
