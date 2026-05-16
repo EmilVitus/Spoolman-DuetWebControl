@@ -65,19 +65,33 @@
           this.success = "";
         },
         discoverServer: async function () {
-          var currentHost = window.location.hostname;
           var candidates = [];
+          var seen = {};
 
-          if (this.manualServerUrl) {
-            candidates.push(this.manualServerUrl);
+          function addCandidate(url) {
+            if (!url) {
+              return;
+            }
+            var base = url.trim().replace(/\/+$/, "");
+            if (!base || seen[base]) {
+              return;
+            }
+            seen[base] = true;
+            candidates.push(base);
           }
+
+          addCandidate(this.manualServerUrl);
+          addCandidate("http://spoolman-bridge.local:9378");
+          addCandidate("http://spoolman-bridge.local:9377");
+
+          var currentHost = window.location.hostname;
           if (currentHost) {
-            candidates.push(window.location.protocol + "//" + currentHost + ":9377");
+            addCandidate(window.location.protocol + "//" + currentHost + ":9378");
+            addCandidate(window.location.protocol + "//" + currentHost + ":9377");
           }
-          candidates.push("http://spoolman-bridge.local:9377");
 
           for (var i = 0; i < candidates.length; i += 1) {
-            var base = candidates[i].replace(/\/+$/, "");
+            var base = candidates[i];
             try {
               var response = await fetch(base + "/api/v1/health", { method: "GET" });
               if (response.ok) {
@@ -91,7 +105,7 @@
             }
           }
           this.connected = false;
-          this.setToast("error", "Could not discover server. Enter URL manually.");
+          this.setToast("error", "Could not discover server. Enter URL manually (e.g. http://spoolman-bridge.local:9378).");
           return false;
         },
         loadSettings: async function () {
@@ -244,7 +258,7 @@
               h("label", { class: "spoolman-label" }, "Manual server URL"),
               h("input", {
                 class: "spoolman-input",
-                attrs: { type: "text", placeholder: "http://spoolman-bridge.local:9377" },
+                attrs: { type: "text", placeholder: "http://spoolman-bridge.local:9378" },
                 domProps: { value: this.manualServerUrl },
                 on: {
                   input: function (event) {
