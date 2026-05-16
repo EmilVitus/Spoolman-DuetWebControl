@@ -22,15 +22,45 @@ Version `0.5.0` is a clean rewrite with a server-driven architecture:
   - RepRapFirmware (`rr_connect`, `rr_model`)
   - Spoolman (`/api/v1`)
 
-## Install
+## Install bridge server (Debian/Ubuntu, one command)
+
+This always installs the latest stable GitHub release (no manual zip transfer):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EmilVitus/Spoolman-DuetWebControl/main/scripts/install-bridge.sh | sudo bash
+```
+
+## Install nightly test build (Debian/Ubuntu, one command)
+
+This always installs the latest nightly build from the fixed **Spoolman Nightly Builds** prerelease:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/EmilVitus/Spoolman-DuetWebControl/main/scripts/install-bridge-nightly.sh | sudo bash
+```
+
+Nightly defaults:
+
+- service: `spoolman-bridge-nightly`
+- install path: `/opt/spoolman-bridge-nightly`
+- port: `9378`
+
+Optional environment variables:
+
+- `SPOOLMAN_BRIDGE_INSTALL_DIR` (default: `/opt/spoolman-bridge`)
+- `SPOOLMAN_BRIDGE_PORT` (default: `9377`)
+- `SPOOLMAN_BRIDGE_REPO` (default: `EmilVitus/Spoolman-DuetWebControl`)
+
+After install:
+
+```bash
+sudo systemctl status spoolman-bridge
+curl http://127.0.0.1:9377/api/v1/health
+```
+
+## Developer install (from repository)
 
 ```bash
 npm install
-```
-
-## Run bridge server
-
-```bash
 npm run start --workspace server
 ```
 
