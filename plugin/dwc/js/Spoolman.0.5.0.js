@@ -123,11 +123,80 @@
           this.setToast("success", "Connected to bridge server");
           return true;
         },
-        buildDiscoveryCandidates: function (includeSubnetScan) {
+        discoverLocalIPv4Hint: function () {
+          return new Promise(function (resolve) {
+            var rtc = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+            if (!rtc) {
+              resolve("");
+              return;
+            }
+
+            var connection = new rtc({ iceServers: [] });
+            var finished = false;
+
+            function finish(value) {
+              if (finished) {
+                return;
+              }
+              finished = true;
+              try {
+                connection.close();
+              } catch (_error) {
+                // Ignore close errors.
+              }
+              resolve(value || "");
+            }
+
+            connection.onicecandidate = function (event) {
+              if (!event || !event.candidate || !event.candidate.candidate) {
+                return;
+              }
+              var match = /(\d{1,3}(?:\.\d{1,3}){3})/.exec(event.candidate.candidate);
+              if (match) {
+                finish(match[1]);
+              }
+            };
+
+            try {
+              connection.createDataChannel("spoolman-discovery");
+              connection.createOffer().then(function (offer) {
+                return connection.setLocalDescription(offer);
+              }).catch(function () {
+                finish("");
+              });
+            } catch (_error) {
+              finish("");
+              return;
+            }
+
+            setTimeout(function () {
+              finish("");
+            }, 1500);
+          });
+        },
+        getSubnetPrefixes: async function () {
+          var prefixes = {};
+          var self = this;
+
+          function addPrefix(value) {
+            var prefix = self.extractSubnetPrefix(value);
+            if (prefix) {
+              prefixes[prefix] = true;
+            }
+          }
+
+          addPrefix(window.location.hostname);
+          addPrefix(this.manualServerUrl);
+          addPrefix(this.getRememberedBridgeUrl());
+          addPrefix(await this.discoverLocalIPv4Hint());
+
+          return Object.keys(prefixes);
+        },
+        buildDiscoveryCandidates: function (includeSubnetScan, subnetPrefixes) {
           var candidates = [];
           var seen = {};
-          var self = this;
           var ports = [9378, 9377];
+          var priorityHosts = [85, 1, 2, 10, 20, 50, 100, 150, 200, 254];
 
           function addCandidate(url) {
             if (!url) {
@@ -141,6 +210,12 @@
             candidates.push(base);
           }
 
+          function addHostOnPrefix(prefix, hostId) {
+            for (var p = 0; p < ports.length; p += 1) {
+              addCandidate("http://" + prefix + "." + hostId + ":" + ports[p]);
+            }
+          }
+
           addCandidate(this.getRememberedBridgeUrl());
           addCandidate(this.manualServerUrl);
           addCandidate("http://spoolman-bridge.local:9378");
@@ -152,26 +227,20 @@
             addCandidate(window.location.protocol + "//" + currentHost + ":9377");
           }
 
-          if (includeSubnetScan) {
-            var prefixes = {};
-            var prefixSources = [
-              window.location.hostname,
-              this.manualServerUrl,
-              this.getRememberedBridgeUrl()
-            ];
-            for (var s = 0; s < prefixSources.length; s += 1) {
-              var prefix = self.extractSubnetPrefix(prefixSources[s]);
-              if (prefix) {
-                prefixes[prefix] = true;
+          if (includeSubnetScan && subnetPrefixes && subnetPrefixes.length) {
+            for (var prefixIndex = 0; prefixIndex < subnetPrefixes.length; prefixIndex += 1) {
+              var prefix = subnetPrefixes[prefixIndex];
+              var hostId;
+              for (var priorityIndex = 0; priorityIndex < priorityHosts.length; priorityIndex += 1) {
+                addHostOnPrefix(prefix, priorityHosts[priorityIndex]);
+              }
+              for (hostId = 1; hostId <= 254; hostId += 1) {
+                if (priorityHosts.indexOf(hostId) >= 0) {
+                  continue;
+                }
+                addHostOnPrefix(prefix, hostId);
               }
             }
-            Object.keys(prefixes).forEach(function (prefix) {
-              for (var hostId = 1; hostId <= 254; hostId += 1) {
-                for (var p = 0; p < ports.length; p += 1) {
-                  addCandidate("http://" + prefix + "." + hostId + ":" + ports[p]);
-                }
-              }
-            });
           }
 
           return candidates;
@@ -194,18 +263,27 @@
           }
           return null;
         },
+        connectManualServer: async function () {
+          var manual = (this.manualServerUrl || "").trim().replace(/\/+$/, "");
+          if (!manual) {
+            this.setToast("error", "Enter bridge server URL first (e.g. http://192.168.86.85:9378).");
+            return false;
+          }
+          return this.connectToBridge(manual);
+        },
         discoverServer: async function (options) {
           options = options || {};
           var includeSubnetScan = options.includeSubnetScan !== false;
-          var quickCandidates = this.buildDiscoveryCandidates(false);
+          var subnetPrefixes = await this.getSubnetPrefixes();
+          var quickCandidates = this.buildDiscoveryCandidates(false, subnetPrefixes);
           var found = await this.probeDiscoveryCandidates(quickCandidates);
           if (found) {
             return this.connectToBridge(found);
           }
 
-          if (includeSubnetScan) {
+          if (includeSubnetScan && subnetPrefixes.length > 0) {
             this.setToast("success", "Searching local network for bridge server...");
-            var subnetCandidates = this.buildDiscoveryCandidates(true);
+            var subnetCandidates = this.buildDiscoveryCandidates(true, subnetPrefixes);
             found = await this.probeDiscoveryCandidates(subnetCandidates);
             if (found) {
               return this.connectToBridge(found);
@@ -215,7 +293,7 @@
           this.connected = false;
           this.setToast(
             "error",
-            "Could not discover server. Use Manual server URL with IP (e.g. http://192.168.86.85:9378)."
+            "Could not discover server. Enter IP in Manual server URL and click Connect (e.g. http://192.168.86.85:9378)."
           );
           return false;
         },
@@ -324,6 +402,7 @@
       },
       mounted: function () {
         var self = this;
+        this.manualServerUrl = this.getRememberedBridgeUrl();
         this.discoverServer().then(function (found) {
           if (!found) {
             return;
@@ -379,7 +458,8 @@
               })
             ]),
             h("div", { class: "spoolman-row" }, [
-              h("button", { class: "spoolman-button", on: { click: this.discoverServer } }, "Discover server"),
+              h("button", { class: "spoolman-button", on: { click: function () { self.connectManualServer(); } } }, "Connect"),
+              h("button", { class: "spoolman-button", on: { click: function () { self.discoverServer(); } } }, "Discover server"),
               h("span", { class: "spoolman-status" }, this.connected ? "Connected: " + this.serverUrl : "Not connected")
             ])
           ]),
