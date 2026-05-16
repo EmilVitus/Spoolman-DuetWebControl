@@ -26,11 +26,11 @@ Version `0.5.0` is a clean rewrite with a server-driven architecture:
 
 ## Install bridge server (Debian/Ubuntu, one command)
 
-~~This always installs the latest stable GitHub release (no manual zip transfer):
+~~This always installs the latest stable GitHub release (no manual zip transfer):~~
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/EmilVitus/Spoolman-DuetWebControl/main/scripts/install-bridge.sh | sudo bash
-```~~
+```
 
 ## Install nightly test build (Debian/Ubuntu, one command)
 
