@@ -44,6 +44,23 @@
   border-color: rgba(127, 127, 127, 0.75);
 }
 
+select.spoolman-input {
+  appearance: auto;
+  -webkit-appearance: menulist;
+  color: inherit;
+  background-color: rgba(127, 127, 127, 0.12);
+}
+
+select.spoolman-input option {
+  color: #111111;
+  background-color: #f2f2f2;
+}
+
+select.spoolman-input option:checked {
+  color: #ffffff;
+  background-color: #2e7d32;
+}
+
 .spoolman-dropdown {
   position: relative;
   min-width: 260px;
