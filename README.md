@@ -24,9 +24,9 @@ Version `0.5.0` is a clean rewrite with a server-driven architecture:
   - RepRapFirmware (`rr_connect`, `rr_model`)
   - Spoolman (`/api/v1`)
 
-## ~~Install bridge server (Debian/Ubuntu, one command)~~
+## Install bridge server (Debian/Ubuntu, one command)
 
-~~This always installs the latest stable GitHub release (no manual zip transfer):~~
+This always installs the latest stable GitHub release (no manual zip transfer):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/EmilVitus/Spoolman-DuetWebControl/main/scripts/install-bridge.sh | sudo bash
