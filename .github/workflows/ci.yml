@@ -4,19 +4,29 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  test:
+  test-and-artifacts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm install
       - run: npm run lint
       - run: npm test
+      - run: npm run build
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: spoolman-dwc-test-build-${{ github.run_number }}
+          path: |
+            dist/Spoolman-0.5.0.zip
+            dist/spoolman-bridge-server-0.5.0.zip
+          retention-days: 14
