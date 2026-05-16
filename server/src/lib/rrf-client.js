@@ -6,7 +6,21 @@ function normalizeExtruderPositions(payload) {
   const move = payload?.result ?? payload?.move ?? payload;
 
   if (Array.isArray(move?.extruders)) {
-    return move.extruders.map((value) => Number(value) || 0);
+    return move.extruders.map((value) => {
+      if (typeof value === "number") {
+        return Number(value) || 0;
+      }
+      if (value && typeof value === "object") {
+        // RRF commonly returns objects like { position: 123.45, ... }.
+        if (typeof value.position === "number" || typeof value.position === "string") {
+          return Number(value.position) || 0;
+        }
+        if (typeof value.machinePosition === "number" || typeof value.machinePosition === "string") {
+          return Number(value.machinePosition) || 0;
+        }
+      }
+      return 0;
+    });
   }
 
   if (Array.isArray(move?.axes)) {
