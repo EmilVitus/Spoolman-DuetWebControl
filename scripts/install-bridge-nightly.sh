@@ -11,7 +11,7 @@ PORT="${SPOOLMAN_BRIDGE_PORT:-9378}"
 SERVICE_USER="${SPOOLMAN_BRIDGE_USER:-spoolman-bridge}"
 NIGHTLY_TAG="${SPOOLMAN_BRIDGE_NIGHTLY_TAG:-nightly}"
 
-log() { printf '[install-bridge-nightly] %s\n' "$*"; }
+log() { printf '[install-bridge-nightly] %s\n' "$*" >&2; }
 die() { printf '[install-bridge-nightly] ERROR: %s\n' "$*" >&2; exit 1; }
 
 require_root() {
@@ -83,9 +83,9 @@ install_release() {
   require_command unzip
   mkdir -p "${INSTALL_DIR}"
 
-  local tmp_dir
+  local tmp_dir=""
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "${tmp_dir}"' EXIT
+  trap '[[ -n "${tmp_dir}" ]] && rm -rf "${tmp_dir}"' EXIT
 
   curl -fsSL "${asset_url}" -o "${tmp_dir}/spoolman-bridge-server-nightly.zip"
   unzip -qo "${tmp_dir}/spoolman-bridge-server-nightly.zip" -d "${tmp_dir}/extract"
@@ -154,8 +154,12 @@ main() {
   install_node_if_needed
 
   mapfile -t release_info < <(fetch_nightly_asset_url)
-  local asset_url="${release_info[0]}"
-  local version="${release_info[1]}"
+  local asset_url="${release_info[0]:-}"
+  local version="${release_info[1]:-}"
+
+  if [[ ! "${asset_url}" =~ ^https:// ]]; then
+    die "Failed to resolve nightly download URL. Is the nightly release published?"
+  fi
 
   install_release "${asset_url}" "${version}"
   setup_service_user

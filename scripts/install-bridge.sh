@@ -10,7 +10,7 @@ SERVICE_NAME="${SPOOLMAN_BRIDGE_SERVICE:-spoolman-bridge}"
 PORT="${SPOOLMAN_BRIDGE_PORT:-9377}"
 SERVICE_USER="${SPOOLMAN_BRIDGE_USER:-spoolman-bridge}"
 
-log() { printf '[install-bridge] %s\n' "$*"; }
+log() { printf '[install-bridge] %s\n' "$*" >&2; }
 die() { printf '[install-bridge] ERROR: %s\n' "$*" >&2; exit 1; }
 
 require_root() {
@@ -82,9 +82,9 @@ install_release() {
   require_command unzip
   mkdir -p "${INSTALL_DIR}"
 
-  local tmp_dir
+  local tmp_dir=""
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "${tmp_dir}"' EXIT
+  trap '[[ -n "${tmp_dir}" ]] && rm -rf "${tmp_dir}"' EXIT
 
   curl -fsSL "${asset_url}" -o "${tmp_dir}/spoolman-bridge-server.zip"
   unzip -qo "${tmp_dir}/spoolman-bridge-server.zip" -d "${tmp_dir}/extract"
@@ -153,8 +153,12 @@ main() {
   install_node_if_needed
 
   mapfile -t release_info < <(fetch_latest_asset_url)
-  local asset_url="${release_info[0]}"
-  local version="${release_info[1]}"
+  local asset_url="${release_info[0]:-}"
+  local version="${release_info[1]:-}"
+
+  if [[ ! "${asset_url}" =~ ^https:// ]]; then
+    die "Failed to resolve stable download URL. Is a stable release published?"
+  fi
 
   install_release "${asset_url}" "${version}"
   setup_service_user
