@@ -1,0 +1,200 @@
+import express from "express";
+import cors from "cors";
+import { loadSettings, loadTrackingState, saveSettings, saveTrackingState, mergeSettings } from "./lib/storage.js";
+import { resolveLanguage, getMessages } from "./lib/i18n.js";
+import { createSpoolmanClient } from "./lib/spoolman-client.js";
+import { createTracker } from "./tracking/tracker.js";
+import { startMdnsAdvertisement } from "./lib/mdns.js";
+
+const SERVER_VERSION = "0.5.0";
+const PORT = Number(process.env.PORT) || 9377;
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+let settings = await loadSettings();
+let trackingState = await loadTrackingState();
+
+const tracker = createTracker({
+  getSettings: () => settings,
+  saveSettings: async (nextSettings) => {
+    settings = await saveSettings(nextSettings);
+    return settings;
+  },
+  getTrackingState: () => trackingState,
+  saveTrackingState: async (nextState) => {
+    trackingState = await saveTrackingState(nextState);
+    return trackingState;
+  }
+});
+
+function sanitizeSettingsUpdate(input) {
+  const next = { ...input };
+  if (next.language && !["auto", "en", "da"].includes(next.language)) {
+    throw new Error("language must be auto, en or da");
+  }
+  if (next.hotendCount !== undefined) {
+    const parsed = Number(next.hotendCount);
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 16) {
+      throw new Error("hotendCount must be an integer between 1 and 16");
+    }
+    next.hotendCount = parsed;
+  }
+  if (next.spoolmanBaseUrl !== undefined && typeof next.spoolmanBaseUrl !== "string") {
+    throw new Error("spoolmanBaseUrl must be a string");
+  }
+  if (next.toolSpoolMap !== undefined && typeof next.toolSpoolMap !== "object") {
+    throw new Error("toolSpoolMap must be an object");
+  }
+  if (next.rrf !== undefined) {
+    const merged = { ...settings.rrf, ...next.rrf };
+    merged.pollIntervalMs = Math.max(1000, Number(merged.pollIntervalMs) || 4000);
+    next.rrf = merged;
+  }
+  return next;
+}
+
+app.get("/api/v1/info", (_req, res) => {
+  res.json({
+    name: "Spoolman DWC Bridge Server",
+    version: SERVER_VERSION,
+    apiVersion: "v1",
+    discoveryHost: "spoolman-bridge.local",
+    discoveryPort: PORT
+  });
+});
+
+app.get("/api/v1/health", (_req, res) => {
+  res.json({
+    ok: true,
+    trackingRunning: tracker.isRunning(),
+    lastPollAt: trackingState.lastPollAt,
+    lastError: trackingState.lastError
+  });
+});
+
+app.get("/api/v1/settings", (req, res) => {
+  const browserLocale = String(req.query.browserLocale ?? "");
+  const resolvedLanguage = resolveLanguage(settings.language, browserLocale);
+  res.json({
+    settings,
+    resolvedLanguage,
+    messages: getMessages(resolvedLanguage)
+  });
+});
+
+app.put("/api/v1/settings", async (req, res) => {
+  try {
+    const updates = sanitizeSettingsUpdate(req.body ?? {});
+    settings = await saveSettings(mergeSettings({ ...settings, ...updates }));
+    res.json({ settings });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/v1/status", (_req, res) => {
+  res.json({
+    tracking: trackingState,
+    trackingRunning: tracker.isRunning(),
+    settingsSummary: {
+      language: settings.language,
+      spoolmanConfigured: Boolean(settings.spoolmanBaseUrl),
+      rrfConfigured: Boolean(settings.rrf?.baseUrl),
+      hotendCount: settings.hotendCount
+    }
+  });
+});
+
+app.post("/api/v1/tracking/start", async (_req, res) => {
+  trackingState = await saveTrackingState({ ...trackingState, trackingEnabled: true });
+  tracker.start();
+  res.json({ ok: true, trackingRunning: tracker.isRunning() });
+});
+
+app.post("/api/v1/tracking/stop", async (_req, res) => {
+  trackingState = await saveTrackingState({ ...trackingState, trackingEnabled: false });
+  tracker.stop();
+  res.json({ ok: true, trackingRunning: tracker.isRunning() });
+});
+
+app.post("/api/v1/tracking/poll-now", async (_req, res) => {
+  await tracker.pollNow();
+  res.json({ ok: true, trackingState });
+});
+
+app.get("/api/v1/spools", async (_req, res) => {
+  if (!settings.spoolmanBaseUrl) {
+    res.status(400).json({ error: "spoolmanBaseUrl is not configured" });
+    return;
+  }
+  try {
+    const client = createSpoolmanClient(settings.spoolmanBaseUrl);
+    const [info, health, spools] = await Promise.all([client.info(), client.health(), client.getSpools()]);
+    res.json({
+      info,
+      health,
+      spools
+    });
+  } catch (error) {
+    res.status(502).json({ error: error.message });
+  }
+});
+
+app.put("/api/v1/tools/:toolId/spool", async (req, res) => {
+  const toolId = req.params.toolId.toUpperCase();
+  const spoolId = Number(req.body?.spoolId);
+  if (!/^T\d+$/.test(toolId) || !Number.isInteger(spoolId) || spoolId < 1) {
+    res.status(400).json({ error: "Invalid toolId or spoolId" });
+    return;
+  }
+  settings = await saveSettings(
+    mergeSettings({
+      ...settings,
+      toolSpoolMap: {
+        ...settings.toolSpoolMap,
+        [toolId]: spoolId
+      }
+    })
+  );
+  res.json({ settings });
+});
+
+app.delete("/api/v1/tools/:toolId/spool", async (req, res) => {
+  const toolId = req.params.toolId.toUpperCase();
+  const nextMap = { ...settings.toolSpoolMap };
+  delete nextMap[toolId];
+  settings = await saveSettings(
+    mergeSettings({
+      ...settings,
+      toolSpoolMap: nextMap
+    })
+  );
+  res.json({ settings });
+});
+
+app.get("/api/v1/discovery", (_req, res) => {
+  res.json({
+    method: "mdns-hostname",
+    suggestedUrl: `http://spoolman-bridge.local:${PORT}`,
+    fallback: "manual"
+  });
+});
+
+const mdns = startMdnsAdvertisement({ port: PORT, version: SERVER_VERSION });
+const server = app.listen(PORT, () => {
+  console.log(`Spoolman DWC bridge server 0.5.0 listening on port ${PORT}`);
+});
+
+if (trackingState.trackingEnabled) {
+  tracker.start();
+}
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    tracker.stop();
+    mdns.close();
+    server.close(() => process.exit(0));
+  });
+}
