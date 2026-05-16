@@ -64,9 +64,70 @@
           this.error = "";
           this.success = "";
         },
-        discoverServer: async function () {
+        rememberBridgeUrl: function (url) {
+          try {
+            sessionStorage.setItem("spoolman_bridge_last_url", url);
+          } catch (_error) {
+            // Ignore storage errors.
+          }
+        },
+        getRememberedBridgeUrl: function () {
+          try {
+            return sessionStorage.getItem("spoolman_bridge_last_url") || "";
+          } catch (_error) {
+            return "";
+          }
+        },
+        extractSubnetPrefix: function (value) {
+          if (!value) {
+            return "";
+          }
+          var host = String(value).trim();
+          var fromUrl = host.match(/^https?:\/\/(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}/i);
+          if (fromUrl) {
+            return fromUrl[1];
+          }
+          var direct = host.match(/^(\d{1,3}\.\d{1,3}\.\d{1,3})\.\d{1,3}$/);
+          if (direct) {
+            return direct[1];
+          }
+          return "";
+        },
+        tryBridgeHealth: async function (base, timeoutMs) {
+          var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+          var timer = setTimeout(function () {
+            if (controller) {
+              controller.abort();
+            }
+          }, timeoutMs || 700);
+          try {
+            var response = await fetch(base + "/api/v1/health", {
+              method: "GET",
+              signal: controller ? controller.signal : undefined
+            });
+            return response.ok;
+          } catch (_error) {
+            return false;
+          } finally {
+            clearTimeout(timer);
+          }
+        },
+        connectToBridge: async function (base) {
+          var ok = await this.tryBridgeHealth(base, 1200);
+          if (!ok) {
+            return false;
+          }
+          this.serverUrl = base;
+          this.connected = true;
+          this.rememberBridgeUrl(base);
+          this.setToast("success", "Connected to bridge server");
+          return true;
+        },
+        buildDiscoveryCandidates: function (includeSubnetScan) {
           var candidates = [];
           var seen = {};
+          var self = this;
+          var ports = [9378, 9377];
 
           function addCandidate(url) {
             if (!url) {
@@ -80,6 +141,7 @@
             candidates.push(base);
           }
 
+          addCandidate(this.getRememberedBridgeUrl());
           addCandidate(this.manualServerUrl);
           addCandidate("http://spoolman-bridge.local:9378");
           addCandidate("http://spoolman-bridge.local:9377");
@@ -90,22 +152,71 @@
             addCandidate(window.location.protocol + "//" + currentHost + ":9377");
           }
 
-          for (var i = 0; i < candidates.length; i += 1) {
-            var base = candidates[i];
-            try {
-              var response = await fetch(base + "/api/v1/health", { method: "GET" });
-              if (response.ok) {
-                this.serverUrl = base;
-                this.connected = true;
-                this.setToast("success", "Connected to bridge server");
-                return true;
+          if (includeSubnetScan) {
+            var prefixes = {};
+            var prefixSources = [
+              window.location.hostname,
+              this.manualServerUrl,
+              this.getRememberedBridgeUrl()
+            ];
+            for (var s = 0; s < prefixSources.length; s += 1) {
+              var prefix = self.extractSubnetPrefix(prefixSources[s]);
+              if (prefix) {
+                prefixes[prefix] = true;
               }
-            } catch (_error) {
-              // Continue with the next candidate.
+            }
+            Object.keys(prefixes).forEach(function (prefix) {
+              for (var hostId = 1; hostId <= 254; hostId += 1) {
+                for (var p = 0; p < ports.length; p += 1) {
+                  addCandidate("http://" + prefix + "." + hostId + ":" + ports[p]);
+                }
+              }
+            });
+          }
+
+          return candidates;
+        },
+        probeDiscoveryCandidates: async function (candidates) {
+          var batchSize = 48;
+          for (var start = 0; start < candidates.length; start += batchSize) {
+            var batch = candidates.slice(start, start + batchSize);
+            var self = this;
+            var checks = await Promise.all(batch.map(function (base) {
+              return self.tryBridgeHealth(base, 700).then(function (ok) {
+                return ok ? base : null;
+              });
+            }));
+            for (var i = 0; i < checks.length; i += 1) {
+              if (checks[i]) {
+                return checks[i];
+              }
             }
           }
+          return null;
+        },
+        discoverServer: async function (options) {
+          options = options || {};
+          var includeSubnetScan = options.includeSubnetScan !== false;
+          var quickCandidates = this.buildDiscoveryCandidates(false);
+          var found = await this.probeDiscoveryCandidates(quickCandidates);
+          if (found) {
+            return this.connectToBridge(found);
+          }
+
+          if (includeSubnetScan) {
+            this.setToast("success", "Searching local network for bridge server...");
+            var subnetCandidates = this.buildDiscoveryCandidates(true);
+            found = await this.probeDiscoveryCandidates(subnetCandidates);
+            if (found) {
+              return this.connectToBridge(found);
+            }
+          }
+
           this.connected = false;
-          this.setToast("error", "Could not discover server. Enter URL manually (e.g. http://spoolman-bridge.local:9378).");
+          this.setToast(
+            "error",
+            "Could not discover server. Use Manual server URL with IP (e.g. http://192.168.86.85:9378)."
+          );
           return false;
         },
         loadSettings: async function () {
@@ -258,7 +369,7 @@
               h("label", { class: "spoolman-label" }, "Manual server URL"),
               h("input", {
                 class: "spoolman-input",
-                attrs: { type: "text", placeholder: "http://spoolman-bridge.local:9378" },
+                attrs: { type: "text", placeholder: "http://192.168.x.x:9378" },
                 domProps: { value: this.manualServerUrl },
                 on: {
                   input: function (event) {

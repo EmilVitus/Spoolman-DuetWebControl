@@ -5,6 +5,7 @@ import { resolveLanguage, getMessages } from "./lib/i18n.js";
 import { createSpoolmanClient } from "./lib/spoolman-client.js";
 import { createTracker } from "./tracking/tracker.js";
 import { startMdnsAdvertisement } from "./lib/mdns.js";
+import { buildBridgeBaseUrls, getLanIPv4Addresses } from "./lib/network.js";
 
 const SERVER_VERSION = "0.5.0";
 const PORT = Number(process.env.PORT) || 9377;
@@ -54,6 +55,30 @@ function sanitizeSettingsUpdate(input) {
   }
   return next;
 }
+
+function getDiscoveryPayload() {
+  const lanAddresses = getLanIPv4Addresses();
+  return {
+    method: "lan-ip-preferred",
+    mdnsHostname: "spoolman-bridge.local",
+    port: PORT,
+    lanAddresses,
+    suggestedUrls: buildBridgeBaseUrls(PORT, lanAddresses),
+    fallback: "manual"
+  };
+}
+
+app.get("/", (_req, res) => {
+  const discovery = getDiscoveryPayload();
+  res.json({
+    service: "Spoolman DWC Bridge Server",
+    version: SERVER_VERSION,
+    health: "/api/v1/health",
+    api: "/api/v1",
+    ...discovery,
+    note: "Root path has no UI. Use /api/v1/health or open this URL in the plugin."
+  });
+});
 
 app.get("/api/v1/info", (_req, res) => {
   res.json({
@@ -175,11 +200,7 @@ app.delete("/api/v1/tools/:toolId/spool", async (req, res) => {
 });
 
 app.get("/api/v1/discovery", (_req, res) => {
-  res.json({
-    method: "mdns-hostname",
-    suggestedUrl: `http://spoolman-bridge.local:${PORT}`,
-    fallback: "manual"
-  });
+  res.json(getDiscoveryPayload());
 });
 
 const mdns = startMdnsAdvertisement({ port: PORT, version: SERVER_VERSION });
