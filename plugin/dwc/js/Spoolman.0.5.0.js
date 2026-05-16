@@ -33,7 +33,8 @@
             lastPollAt: null,
             lastError: null
           },
-          spools: []
+          spools: [],
+          openToolDropdown: ""
         };
       },
       methods: {
@@ -42,6 +43,68 @@
         },
         browserLocale: function () {
           return navigator.language || "en";
+        },
+        normalizeHexColor: function (value) {
+          var raw = String(value || "").trim().replace("#", "");
+          if (/^[0-9a-fA-F]{3}$/.test(raw)) {
+            raw = raw[0] + raw[0] + raw[1] + raw[1] + raw[2] + raw[2];
+          }
+          if (/^[0-9a-fA-F]{6}$/.test(raw)) {
+            return "#" + raw.toUpperCase();
+          }
+          if (/^[0-9a-fA-F]{8}$/.test(raw)) {
+            return "#" + raw.slice(0, 6).toUpperCase();
+          }
+          return "";
+        },
+        getSpoolPrimaryColor: function (spool) {
+          var filament = spool && spool.filament ? spool.filament : {};
+          var multi = filament.multi_color_hexes || filament.multi_color_hexes_csv;
+          if (typeof multi === "string" && multi.trim()) {
+            var first = multi.split(",")[0];
+            var parsedMulti = this.normalizeHexColor(first);
+            if (parsedMulti) {
+              return parsedMulti;
+            }
+          }
+          return this.normalizeHexColor(filament.color_hex);
+        },
+        getTextColorForBackground: function (hexColor) {
+          var normalized = this.normalizeHexColor(hexColor);
+          if (!normalized) {
+            return "inherit";
+          }
+          var r = parseInt(normalized.slice(1, 3), 16);
+          var g = parseInt(normalized.slice(3, 5), 16);
+          var b = parseInt(normalized.slice(5, 7), 16);
+          var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          return luminance > 145 ? "#101010" : "#ffffff";
+        },
+        getToolAssignedSpool: function (toolId) {
+          var selectedId = Number(this.settings.toolSpoolMap[toolId]);
+          for (var i = 0; i < this.spools.length; i += 1) {
+            if (Number(this.spools[i].id) === selectedId) {
+              return this.spools[i];
+            }
+          }
+          return null;
+        },
+        getToolDisplayLabel: function (toolId) {
+          var spool = this.getToolAssignedSpool(toolId);
+          if (!spool) {
+            return "Not assigned";
+          }
+          return "#" + spool.id + " - " + (spool.filament && spool.filament.name ? spool.filament.name : "Unknown");
+        },
+        toggleToolDropdown: function (toolId) {
+          this.openToolDropdown = this.openToolDropdown === toolId ? "" : toolId;
+        },
+        closeToolDropdown: function () {
+          this.openToolDropdown = "";
+        },
+        selectToolSpool: async function (toolId, spoolId) {
+          this.openToolDropdown = "";
+          await this.setToolSpool(toolId, spoolId);
         },
         toolList: function () {
           var count = Number(this.settings.hotendCount) || 1;
@@ -466,22 +529,64 @@
         var self = this;
         var tools = this.toolList();
         var toolRows = tools.map(function (toolId) {
-          return h("div", { class: "spoolman-row" }, [
-            h("label", { class: "spoolman-label" }, toolId),
-            h("select", {
-              class: "spoolman-input",
-              domProps: { value: self.settings.toolSpoolMap[toolId] || "" },
+          var selectedSpool = self.getToolAssignedSpool(toolId);
+          var selectedColor = selectedSpool ? self.getSpoolPrimaryColor(selectedSpool) : "";
+          var selectedTextColor = self.getTextColorForBackground(selectedColor);
+          var dropdownOpen = self.openToolDropdown === toolId;
+
+          var optionRows = [
+            h("button", {
+              class: "spoolman-dropdown-option",
+              style: {
+                backgroundColor: "rgba(127, 127, 127, 0.12)",
+                color: "inherit"
+              },
               on: {
-                change: function (event) {
-                  self.setToolSpool(toolId, event.target.value);
+                click: function () {
+                  self.selectToolSpool(toolId, "");
                 }
               }
-            }, [
-              h("option", { domProps: { value: "" } }, "Not assigned")
-            ].concat(self.spools.map(function (spool) {
-              var label = "#" + spool.id + " - " + (spool.filament?.name || "Unknown");
-              return h("option", { domProps: { value: spool.id } }, label);
-            })))
+            }, "Not assigned")
+          ];
+
+          for (var i = 0; i < self.spools.length; i += 1) {
+            var spool = self.spools[i];
+            var spoolColor = self.getSpoolPrimaryColor(spool);
+            var textColor = self.getTextColorForBackground(spoolColor);
+            var optionLabel = "#" + spool.id + " - " + (spool.filament && spool.filament.name ? spool.filament.name : "Unknown");
+            optionRows.push(h("button", {
+              class: "spoolman-dropdown-option",
+              style: {
+                backgroundColor: spoolColor || "rgba(127, 127, 127, 0.12)",
+                color: spoolColor ? textColor : "inherit"
+              },
+              on: {
+                click: function (spoolId) {
+                  return function () {
+                    self.selectToolSpool(toolId, spoolId);
+                  };
+                }(spool.id)
+              }
+            }, optionLabel));
+          }
+
+          return h("div", { class: "spoolman-row" }, [
+            h("label", { class: "spoolman-label" }, toolId),
+            h("div", { class: "spoolman-dropdown" }, [
+              h("button", {
+                class: "spoolman-dropdown-trigger",
+                style: {
+                  backgroundColor: selectedColor || "rgba(127, 127, 127, 0.12)",
+                  color: selectedColor ? selectedTextColor : "inherit"
+                },
+                on: {
+                  click: function () {
+                    self.toggleToolDropdown(toolId);
+                  }
+                }
+              }, self.getToolDisplayLabel(toolId)),
+              dropdownOpen ? h("div", { class: "spoolman-dropdown-menu" }, optionRows) : null
+            ])
           ]);
         });
 

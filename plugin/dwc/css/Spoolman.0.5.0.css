@@ -44,6 +44,50 @@
   border-color: rgba(127, 127, 127, 0.75);
 }
 
+.spoolman-dropdown {
+  position: relative;
+  min-width: 260px;
+}
+
+.spoolman-dropdown-trigger {
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.spoolman-dropdown-menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid rgba(127, 127, 127, 0.4);
+  border-radius: 6px;
+  background: rgba(30, 30, 30, 0.95);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.spoolman-dropdown-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: none;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+  cursor: pointer;
+  font: inherit;
+}
+
+.spoolman-dropdown-option:last-child {
+  border-bottom: none;
+}
+
 .spoolman-button {
   padding: 7px 12px;
   color: inherit;
